@@ -1,0 +1,613 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "loophole tape",
+    "description": "Live pump.fun / PumpSwap analytics derived from public on-chain data. Pay per request in USDC on Solana through x402. See the documented routes for coverage and freshness.",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Index",
+        "operationId": "index__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/x402": {
+      "get": {
+        "summary": "Well Known X402",
+        "description": "Union manifest: IETF draft-hawkins-x402-dns-discovery-03 keys + x402scan's minimal `version`/`resources` shape.",
+        "operationId": "well_known_x402__well_known_x402_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/robots.txt": {
+      "get": {
+        "summary": "Robots",
+        "operationId": "robots_robots_txt_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/terms": {
+      "get": {
+        "summary": "Terms",
+        "operationId": "terms_terms_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/x402/resources": {
+      "get": {
+        "summary": "X402 Resources",
+        "operationId": "x402_resources_v1_x402_resources_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/market/regime": {
+      "get": {
+        "summary": "Market Regime",
+        "operationId": "market_regime_v1_market_regime_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sample/launches": {
+      "get": {
+        "summary": "Sample Launches",
+        "operationId": "sample_launches_v1_sample_launches_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sample/rugs": {
+      "get": {
+        "summary": "Sample Rugs",
+        "operationId": "sample_rugs_v1_sample_rugs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sample/mint": {
+      "get": {
+        "summary": "Sample Mint",
+        "operationId": "sample_mint_v1_sample_mint_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mint/{mint}": {
+      "get": {
+        "summary": "Mint View",
+        "operationId": "mint_view_v1_mint__mint__get",
+        "parameters": [
+          {
+            "name": "mint",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mint"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+          }
+        },
+        "x-payment-info": {
+          "protocol": "x402",
+          "x402Version": 2,
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "price": "$0.025",
+          "priceUsd": 0.025
+        }
+      }
+    },
+    "/v1/launches/recent": {
+      "get": {
+        "summary": "Launches Recent",
+        "operationId": "launches_recent_v1_launches_recent_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "max_age_s",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 21600,
+              "minimum": 30,
+              "default": 3600.0,
+              "title": "Max Age S"
+            }
+          },
+          {
+            "name": "exclude_mayhem",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Exclude Mayhem"
+            }
+          },
+          {
+            "name": "min_rs",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "default": 0.0,
+              "title": "Min Rs"
+            }
+          },
+          {
+            "name": "only_alive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Only Alive"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+          }
+        },
+        "x-payment-info": {
+          "protocol": "x402",
+          "x402Version": 2,
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "price": "$0.01",
+          "priceUsd": 0.01
+        }
+      }
+    },
+    "/v1/rugs/recent": {
+      "get": {
+        "summary": "Rugs Recent",
+        "operationId": "rugs_recent_v1_rugs_recent_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "window_s",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 21600,
+              "minimum": 60,
+              "default": 3600.0,
+              "title": "Window S"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+          }
+        },
+        "x-payment-info": {
+          "protocol": "x402",
+          "x402Version": 2,
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "price": "$0.02",
+          "priceUsd": 0.02
+        }
+      }
+    },
+    "/v1/graduations/recent": {
+      "get": {
+        "summary": "Graduations Recent",
+        "operationId": "graduations_recent_v1_graduations_recent_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "window_s",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 86400,
+              "minimum": 60,
+              "default": 21600.0,
+              "title": "Window S"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+          }
+        },
+        "x-payment-info": {
+          "protocol": "x402",
+          "x402Version": 2,
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "price": "$0.02",
+          "priceUsd": 0.02
+        }
+      }
+    },
+    "/v1/creator/{address}": {
+      "get": {
+        "summary": "Creator View",
+        "operationId": "creator_view_v1_creator__address__get",
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Address"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+          }
+        },
+        "x-payment-info": {
+          "protocol": "x402",
+          "x402Version": 2,
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "price": "$0.02",
+          "priceUsd": 0.02
+        }
+      }
+    },
+    "/v1/wallet/{address}": {
+      "get": {
+        "summary": "Wallet View",
+        "operationId": "wallet_view_v1_wallet__address__get",
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Address"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+          }
+        },
+        "x-payment-info": {
+          "protocol": "x402",
+          "x402Version": 2,
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "price": "$0.02",
+          "priceUsd": 0.02
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.loopholetape.com"
+    }
+  ]
+}
