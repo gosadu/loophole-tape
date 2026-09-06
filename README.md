@@ -43,6 +43,15 @@ Any x402 v2 client works the same way: call the route, read the `PAYMENT-REQUIRE
 `PAYMENT-SIGNATURE`; the `PAYMENT-RESPONSE` header carries the settlement signature. TypeScript: `@x402/fetch` + `@x402/svm`.
 Agents: the routes are listed in the PayAI x402 catalog and on agent402.tools; AgentKit's `discover_x402_services` finds them.
 
+## MCP (for agents that call tools)
+
+The same intelligence is an MCP server over streamable HTTP at `https://api.loopholetape.com/mcp`,
+listed in the official MCP registry as `io.github.gosadu/loophole-tape`. Tools: `market_regime` and `sample_mint` (free),
+`mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs`, `recent_graduations`, `creator_reputation`,
+`wallet_profile` ($0.02 each). Paid tools use x402 over MCP: the first call returns a payment-required result, the client pays
+in `_meta["x402/payment"]`, the settlement comes back in `_meta["x402/payment-response"]`. Reference client: `mcp_client.py`
+(`pip install "x402[httpx,svm]==2.22.0" "solana==0.36.7" "mcp<2"`).
+
 ## Terms, in one line
 
 Statistics derived from public on-chain data; labels are heuristics, not guarantees; nothing here is financial advice; sold as-is per request; no refunds for empty results; do not resell raw responses. Full text at `/terms`.
