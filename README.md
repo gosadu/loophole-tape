@@ -33,15 +33,15 @@ Every paid response is self-describing: `schema_version`, `generated_at`, `cover
 ## Pay from Python (reference client)
 
 ```bash
-pip install "x402[httpx,svm]==2.22.0" "solana==0.36.7"
+pip install "x402[httpx,svm]==2.22.0" && pip install "solana==0.36.7"   # two steps: the second downgrades solders to 0.26 with a resolver warning you can ignore; verified on a fresh venv
 TAPE_PAYER_KEYPAIR=~/.config/solana/payer.json python pay_client.py https://api.loopholetape.com "/v1/launches/recent?limit=5"
 ```
 
-Any x402 v2 client works the same way: call the route, read the `PAYMENT-REQUIRED` header (the 402 body repeats it as JSON with a `how` field), sign the USDC transfer, retry with `PAYMENT-SIGNATURE`; the `PAYMENT-RESPONSE` header carries the settlement signature. TypeScript: `@x402/fetch` + `@x402/svm`. AgentKit's `discover_x402_services` finds the routes.
+The reference clients register a payment guard: they sign only for this API's recipient, Solana mainnet and USDC, at or under the route's price (cap `TAPE_MAX_USD_PER_CALL`, default $0.03); anything else is refused. Any x402 v2 client works the same way: call the route, read the `PAYMENT-REQUIRED` header (the 402 body repeats it as JSON with a `how` field), sign the USDC transfer, retry with `PAYMENT-SIGNATURE`; the `PAYMENT-RESPONSE` header carries the settlement signature. TypeScript: `@x402/fetch` + `@x402/svm`. AgentKit's `discover_x402_services` finds the routes.
 
 ## MCP (for agents that call tools)
 
-MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). Tools: `catalog` (free), `health` (free), `market_regime` (free), `sample_mint` (free), `mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs` ($0.02), `recent_graduations` ($0.02), `creator_reputation` ($0.02), `wallet_profile` ($0.02), `rhc_regime` (free), `rhc_recent_launches` ($0.01), `rhc_curve_card` ($0.02). Paid tools use x402 over MCP: the first call returns a payment-required result, the client pays in `_meta["x402/payment"]`, the settlement comes back in `_meta["x402/payment-response"]`; invalid arguments return a structured `isError` result with the schema before any payment. Reference client: `mcp_client.py` (`pip install "x402[httpx,svm]==2.22.0" "solana==0.36.7" "mcp<2"`).
+MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). Tools: `catalog` (free), `health` (free), `market_regime` (free), `sample_mint` (free), `mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs` ($0.02), `recent_graduations` ($0.02), `creator_reputation` ($0.02), `wallet_profile` ($0.02), `rhc_regime` (free), `rhc_recent_launches` ($0.01), `rhc_curve_card` ($0.02). Paid tools use x402 over MCP: the first call returns a payment-required result, the client pays in `_meta["x402/payment"]`, the settlement comes back in `_meta["x402/payment-response"]`; invalid arguments return a structured `isError` result with the schema before any payment. Reference client: `mcp_client.py` (`pip install "x402[httpx,svm]==2.22.0" && pip install "solana==0.36.7"   # two steps: the second downgrades solders to 0.26 with a resolver warning you can ignore; verified on a fresh venv "mcp<2"`).
 
 ## Terms, in one line
 
