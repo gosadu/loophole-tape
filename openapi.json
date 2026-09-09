@@ -3,7 +3,13 @@
   "info": {
     "title": "loophole tape",
     "description": "Live pump.fun / PumpSwap analytics derived from public on-chain data. Pay per request in USDC on Solana through x402. See the documented routes for coverage and freshness.",
-    "version": "0.2.0"
+    "version": "0.3.0",
+    "x-guidance": "Machine-payable pump.fun intelligence. Call /v1/x402/resources or /llms.txt first. Paid GET routes return 402 with the x402 v2 PAYMENT-REQUIRED header (and the same JSON in the body); pay USDC on Solana mainnet (exact scheme, PayAI facilitator) and retry with PAYMENT-SIGNATURE. Every response is {ok, schema_version, generated_at, coverage: full|thin, data, meta{feed_lag_s, is_stale, next}}. Free: /v1/market/regime, /v1/sample/*, /health, /v1/labels. MCP at /mcp.",
+    "contact": {
+      "name": "loophole tape",
+      "url": "https://github.com/gosadu/loophole-tape"
+    },
+    "termsOfService": "https://api.loopholetape.com/terms"
   },
   "paths": {
     "/": {
@@ -19,13 +25,17 @@
               }
             }
           }
-        }
+        },
+        "description": "this index",
+        "tags": [
+          "discovery"
+        ]
       }
     },
     "/.well-known/x402": {
       "get": {
         "summary": "Well Known X402",
-        "description": "Union manifest: IETF draft-hawkins-x402-dns-discovery-03 keys + x402scan's minimal `version`/`resources` shape.",
+        "description": "Union manifest: IETF draft-hawkins-x402-dns-discovery-03 keys + x402scan's minimal `version`/`resources` shape + payment terms per resource.",
         "operationId": "well_known_x402__well_known_x402_get",
         "responses": {
           "200": {
@@ -33,6 +43,49 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          }
+        },
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
+    "/llms.txt": {
+      "get": {
+        "summary": "Llms Txt",
+        "operationId": "llms_txt_llms_txt_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "description": "plain-text description for LLM agents (llms.txt convention)",
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
+    "/llms-full.txt": {
+      "get": {
+        "summary": "Llms Full Txt",
+        "operationId": "llms_full_txt_llms_full_txt_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -72,7 +125,11 @@
               }
             }
           }
-        }
+        },
+        "description": "terms of use",
+        "tags": [
+          "free"
+        ]
       }
     },
     "/health": {
@@ -88,7 +145,11 @@
               }
             }
           }
-        }
+        },
+        "description": "feed health: seconds behind the chain, last slot, mints tracked, counters",
+        "tags": [
+          "free"
+        ]
       }
     },
     "/v1/x402/resources": {
@@ -104,7 +165,31 @@
               }
             }
           }
-        }
+        },
+        "description": "machine-readable list of paid resources: prices, payment terms, input schema, output example",
+        "tags": [
+          "discovery"
+        ]
+      }
+    },
+    "/v1/labels": {
+      "get": {
+        "summary": "Labels",
+        "operationId": "labels_v1_labels_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "description": "semantics of every label, flag and field (coverage, status, risk_label, confidence, rug flags, history, rhc)",
+        "tags": [
+          "discovery"
+        ]
       }
     },
     "/v1/market/regime": {
@@ -120,7 +205,11 @@
               }
             }
           }
-        }
+        },
+        "description": "market-wide regime meter: launch rate, mayhem share, buy/sell flow, fail share, migrations vs true graduations, rug flags (free)",
+        "tags": [
+          "free"
+        ]
       }
     },
     "/v1/sample/launches": {
@@ -136,7 +225,11 @@
               }
             }
           }
-        }
+        },
+        "description": "free 3-item sample of /v1/launches/recent, delayed >= 300 s",
+        "tags": [
+          "free"
+        ]
       }
     },
     "/v1/sample/rugs": {
@@ -152,7 +245,11 @@
               }
             }
           }
-        }
+        },
+        "description": "free 3-item sample of /v1/rugs/recent, delayed >= 300 s",
+        "tags": [
+          "free"
+        ]
       }
     },
     "/v1/sample/mint": {
@@ -168,13 +265,17 @@
               }
             }
           }
-        }
+        },
+        "description": "free full risk card of one mint aged >= 300 s (the exact paid shape)",
+        "tags": [
+          "free"
+        ]
       }
     },
     "/v1/mint/{mint}": {
       "get": {
-        "summary": "Mint View",
-        "operationId": "mint_view_v1_mint__mint__get",
+        "summary": "Risk card for one pump.fun mint (live microstructure or thin on-chain card)",
+        "operationId": "mint",
         "parameters": [
           {
             "name": "mint",
@@ -183,15 +284,162 @@
             "schema": {
               "type": "string",
               "title": "Mint"
-            }
+            },
+            "description": "base58 SPL mint address (32-44 chars); pump.fun mints usually end in 'pump'"
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Paid response (header PAYMENT-RESPONSE carries the settlement)",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                "examples": {
+                  "full": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "full",
+                      "data": {
+                        "mint": "So11111111111111111111111111111111111111112",
+                        "name": "Example",
+                        "symbol": "EXM",
+                        "creator": "…",
+                        "created_at": 1788671800.2,
+                        "age_s": 41.9,
+                        "coverage": "full",
+                        "status": "live_curve",
+                        "risk_label": "concentrated",
+                        "confidence": "medium",
+                        "why": [
+                          "top-5 holders own 62.1% of supply",
+                          "create-slot bundle: 4 wallets hold 31.0%",
+                          "curve 12.4 SOL (14.6% of the way to graduation), 3 buys / 1 sell in the last 60 s"
+                        ],
+                        "curve": {
+                          "rs_sol": 12.4,
+                          "peak_rs_sol": 18.9,
+                          "progress": 0.146,
+                          "drawdown_from_peak": 0.34,
+                          "complete": false,
+                          "migrated": false,
+                          "graduated": null,
+                          "is_mayhem": false,
+                          "dev_buy_sol": 1.5
+                        },
+                        "demand": {
+                          "unique_buyers": 41,
+                          "buys_60s": 13,
+                          "sells_60s": 7,
+                          "net_sol_60s": 1.9,
+                          "inflow_stalled": false
+                        },
+                        "holders": {
+                          "n_holders": 38,
+                          "top5_share": 0.621,
+                          "hhi": 0.12,
+                          "dev_share": 0.0,
+                          "bundle_share": 0.31,
+                          "insider_share": 0.03,
+                          "n_bundle_wallets": 4,
+                          "bundle_dumped": false
+                        },
+                        "exit_signals": {
+                          "creator_sold": false,
+                          "top5_holder_sold_recent": true,
+                          "inflow_stalled": false,
+                          "progress_reversed": true
+                        },
+                        "creator_prior_at_launch": {
+                          "n_launches": 12,
+                          "n_resolved": 12,
+                          "grad_rate": 0.0,
+                          "rug_rate": 0.58,
+                          "median_dev_sell_s": 14.2,
+                          "is_first_time": false
+                        },
+                        "warm_launch": null,
+                        "rug_flags": [],
+                        "flags": {},
+                        "base_rates": {
+                          "window_days": 7,
+                          "launches": 192354,
+                          "grad_rate": 0.024,
+                          "rug_rate": 0.652,
+                          "dev_sold_rate": 0.645,
+                          "reached_5_sol_rate": 0.195
+                        },
+                        "next": {
+                          "creator": "/v1/creator/…",
+                          "regime": "/v1/market/regime",
+                          "rugs": "/v1/rugs/recent?window_s=600"
+                        }
+                      }
+                    }
+                  },
+                  "thin": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "thin",
+                      "data": {
+                        "mint": "…pump",
+                        "coverage": "thin",
+                        "coverage_reason": "not in the live window; history + on-chain state only",
+                        "status": "onchain_only",
+                        "risk_label": "unknown",
+                        "confidence": "low",
+                        "why": [
+                          "no live tape for this mint",
+                          "bonding curve open: 5.42 SOL real, 20.7% of tokens sold",
+                          "creator prior: 3 launches, 0 graduations, 2 rugged"
+                        ],
+                        "history": null,
+                        "history_reason": "mint not in our launch history",
+                        "onchain": {
+                          "slot": 445629740,
+                          "exists": true,
+                          "is_token_mint": true,
+                          "token_program": "spl-token-2022",
+                          "decimals": 6,
+                          "supply_ui": 1000000000.0,
+                          "mint_authority": null,
+                          "freeze_authority": null,
+                          "pump_fun": {
+                            "is_pump_fun": true,
+                            "bonding_curve": "…",
+                            "complete": false,
+                            "real_sol_reserves_sol": 5.417,
+                            "virtual_sol_reserves_sol": 35.417,
+                            "progress": 0.207,
+                            "price_sol_per_token": 3.9e-08,
+                            "market_cap_sol": 38.97,
+                            "creator": "…",
+                            "cashback_enabled": false,
+                            "is_mayhem_supply": false
+                          }
+                        },
+                        "creator_prior": {
+                          "n_launches": 3,
+                          "grad_rate": 0.0,
+                          "rug_rate": 0.667
+                        },
+                        "base_rates": {
+                          "window_days": 7,
+                          "launches": 192354,
+                          "grad_rate": 0.024,
+                          "rug_rate": 0.652
+                        },
+                        "next": {
+                          "creator": "/v1/creator/…",
+                          "regime": "/v1/market/regime"
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -206,25 +454,70 @@
             }
           },
           "402": {
-            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+            "description": "Payment required (x402 v2): header PAYMENT-REQUIRED = base64 of the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "the path parameter is not a base58 public key ({ok:false, error, hint})"
           }
         },
+        "description": "Risk card for ONE pump.fun mint, always HTTP 200 for a valid base58 mint. coverage=full when the mint is in our live window: curve truth (graduation = curve witnessed >= 84 SOL), demand (unique buyers, buys/sells 60 s, net SOL), holder concentration (top-5, HHI), create-slot bundle / insider / dev shares, look-ahead-safe creator prior at launch, warm-launch (observed creator-funding links) label, rug/close flags with first-seen times, exit signals. coverage=thin otherwise: our resolved launch record if any + current bonding-curve state from RPC + creator prior. Every card carries status, risk_label, confidence, a why[] list and market base rates. Nulls carry a reason; nothing is guessed.",
+        "tags": [
+          "paid"
+        ],
         "x-payment-info": {
           "protocol": "x402",
+          "protocols": [
+            "x402"
+          ],
           "x402Version": 2,
           "scheme": "exact",
           "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
           "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "assetSymbol": "USDC",
           "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
-          "price": "$0.025",
-          "priceUsd": 0.025
+          "facilitator": "https://facilitator.payai.network",
+          "price": {
+            "mode": "fixed",
+            "amount": "0.025",
+            "currency": "USD"
+          },
+          "priceUsd": 0.025,
+          "amountMicroUsdc": "25000",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "amount": "25000",
+              "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+              "maxTimeoutSeconds": 60,
+              "extra": {
+                "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+              }
+            }
+          ]
+        },
+        "x-latency-ms": {
+          "full": 15,
+          "thin": 300
+        },
+        "x-freshness-s": {
+          "full": 2,
+          "thin": 1
         }
       }
     },
     "/v1/launches/recent": {
       "get": {
-        "summary": "Launches Recent",
-        "operationId": "launches_recent_v1_launches_recent_get",
+        "summary": "Recent pump.fun launches with compact risk labels",
+        "operationId": "launches",
         "parameters": [
           {
             "name": "limit",
@@ -236,7 +529,8 @@
               "minimum": 1,
               "default": 50,
               "title": "Limit"
-            }
+            },
+            "description": "max items"
           },
           {
             "name": "max_age_s",
@@ -248,7 +542,8 @@
               "minimum": 30,
               "default": 3600.0,
               "title": "Max Age S"
-            }
+            },
+            "description": "only mints created within this many seconds"
           },
           {
             "name": "exclude_mayhem",
@@ -258,7 +553,8 @@
               "type": "boolean",
               "default": true,
               "title": "Exclude Mayhem"
-            }
+            },
+            "description": "drop mayhem-class (2B supply, AI walker) launches"
           },
           {
             "name": "min_rs",
@@ -269,7 +565,8 @@
               "minimum": 0,
               "default": 0.0,
               "title": "Min Rs"
-            }
+            },
+            "description": "minimum curve SOL right now"
           },
           {
             "name": "only_alive",
@@ -279,15 +576,52 @@
               "type": "boolean",
               "default": false,
               "title": "Only Alive"
-            }
+            },
+            "description": "drop mints with any rug/close flag"
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Paid response (header PAYMENT-RESPONSE carries the settlement)",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                "examples": {
+                  "full": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "full",
+                      "data": {
+                        "count": 2,
+                        "items": [
+                          {
+                            "mint": "…",
+                            "age_s": 412.3,
+                            "curve": {
+                              "rs_sol": 3.2,
+                              "progress": 0.04
+                            },
+                            "holders": {
+                              "bundle_share": 0.31,
+                              "top5_share": 0.44
+                            },
+                            "demand": {
+                              "unique_buyers": 12
+                            },
+                            "creator_prior_at_launch": {
+                              "n_launches": 0,
+                              "is_first_time": true
+                            },
+                            "rug_flags": []
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -302,25 +636,65 @@
             }
           },
           "402": {
-            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+            "description": "Payment required (x402 v2): header PAYMENT-REQUIRED = base64 of the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequired"
+                }
+              }
+            }
           }
         },
+        "description": "Recent pump.fun launches (default: last hour, mayhem excluded, newest first) as compact cards: curve SOL and progress, unique buyers, holder concentration, create-slot bundle/insider/dev shares, look-ahead-safe creator prior (launches, grad rate, rug rate at the moment of launch), warm-launch label, rug flags with first-seen times. The funnel for a screener: filter by min_rs / only_alive and then buy full cards for the survivors.",
+        "tags": [
+          "paid"
+        ],
         "x-payment-info": {
           "protocol": "x402",
+          "protocols": [
+            "x402"
+          ],
           "x402Version": 2,
           "scheme": "exact",
           "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
           "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "assetSymbol": "USDC",
           "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
-          "price": "$0.01",
-          "priceUsd": 0.01
+          "facilitator": "https://facilitator.payai.network",
+          "price": {
+            "mode": "fixed",
+            "amount": "0.01",
+            "currency": "USD"
+          },
+          "priceUsd": 0.01,
+          "amountMicroUsdc": "10000",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "amount": "10000",
+              "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+              "maxTimeoutSeconds": 60,
+              "extra": {
+                "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+              }
+            }
+          ]
+        },
+        "x-latency-ms": {
+          "full": 25
+        },
+        "x-freshness-s": {
+          "full": 2
         }
       }
     },
     "/v1/rugs/recent": {
       "get": {
-        "summary": "Rugs Recent",
-        "operationId": "rugs_recent_v1_rugs_recent_get",
+        "summary": "Recent rug / close flags with mechanism labels",
+        "operationId": "rugs",
         "parameters": [
           {
             "name": "limit",
@@ -332,7 +706,8 @@
               "minimum": 1,
               "default": 50,
               "title": "Limit"
-            }
+            },
+            "description": "max items"
           },
           {
             "name": "window_s",
@@ -344,15 +719,43 @@
               "minimum": 60,
               "default": 3600.0,
               "title": "Window S"
-            }
+            },
+            "description": "look-back window in seconds"
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Paid response (header PAYMENT-RESPONSE carries the settlement)",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                "examples": {
+                  "full": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "full",
+                      "data": {
+                        "count": 1,
+                        "items": [
+                          {
+                            "t": 1788671846.0,
+                            "mint": "…",
+                            "flag": "curve_drained",
+                            "detail": {
+                              "peak_rs": 18.97,
+                              "rs": 0.23
+                            },
+                            "mint_age_at_flag_s": 7.3,
+                            "creator": "…"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -367,25 +770,65 @@
             }
           },
           "402": {
-            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+            "description": "Payment required (x402 v2): header PAYMENT-REQUIRED = base64 of the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequired"
+                }
+              }
+            }
           }
         },
+        "description": "Rug and close flags fired in the window (newest first), each with its mechanism (creator_sold, bundle_dumped, curve_drained, pool_drained, curve_closed_low, migrate_below_grad), the flag time, the mint's age at the flag, peak and current curve SOL, name/symbol/creator. Use it to review observed risk events and their frequency.",
+        "tags": [
+          "paid"
+        ],
         "x-payment-info": {
           "protocol": "x402",
+          "protocols": [
+            "x402"
+          ],
           "x402Version": 2,
           "scheme": "exact",
           "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
           "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "assetSymbol": "USDC",
           "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
-          "price": "$0.02",
-          "priceUsd": 0.02
+          "facilitator": "https://facilitator.payai.network",
+          "price": {
+            "mode": "fixed",
+            "amount": "0.02",
+            "currency": "USD"
+          },
+          "priceUsd": 0.02,
+          "amountMicroUsdc": "20000",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "amount": "20000",
+              "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+              "maxTimeoutSeconds": 60,
+              "extra": {
+                "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+              }
+            }
+          ]
+        },
+        "x-latency-ms": {
+          "full": 10
+        },
+        "x-freshness-s": {
+          "full": 2
         }
       }
     },
     "/v1/graduations/recent": {
       "get": {
-        "summary": "Graduations Recent",
-        "operationId": "graduations_recent_v1_graduations_recent_get",
+        "summary": "Recent migrations labelled true graduation vs below-threshold close",
+        "operationId": "graduations",
         "parameters": [
           {
             "name": "limit",
@@ -397,7 +840,8 @@
               "minimum": 1,
               "default": 50,
               "title": "Limit"
-            }
+            },
+            "description": "max items"
           },
           {
             "name": "window_s",
@@ -409,15 +853,41 @@
               "minimum": 60,
               "default": 21600.0,
               "title": "Window S"
-            }
+            },
+            "description": "look-back window in seconds"
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Paid response (header PAYMENT-RESPONSE carries the settlement)",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                "examples": {
+                  "full": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "full",
+                      "data": {
+                        "count": 1,
+                        "items": [
+                          {
+                            "mint": "…",
+                            "migrate_t": 1788671128.2,
+                            "graduated": true,
+                            "curve": {
+                              "peak_rs_sol": 85.005,
+                              "pool": "…"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -432,25 +902,65 @@
             }
           },
           "402": {
-            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+            "description": "Payment required (x402 v2): header PAYMENT-REQUIRED = base64 of the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequired"
+                }
+              }
+            }
           }
         },
+        "description": "Migrations to PumpSwap in the window (default 6 h), each labelled graduated=true only when we witnessed the curve at >= 84 SOL, otherwise a below-threshold close (mayhem or operator pools). Each item is a compact card with the migrate time, pool, peak curve SOL and the holder/creator labels.",
+        "tags": [
+          "paid"
+        ],
         "x-payment-info": {
           "protocol": "x402",
+          "protocols": [
+            "x402"
+          ],
           "x402Version": 2,
           "scheme": "exact",
           "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
           "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "assetSymbol": "USDC",
           "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
-          "price": "$0.02",
-          "priceUsd": 0.02
+          "facilitator": "https://facilitator.payai.network",
+          "price": {
+            "mode": "fixed",
+            "amount": "0.02",
+            "currency": "USD"
+          },
+          "priceUsd": 0.02,
+          "amountMicroUsdc": "20000",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "amount": "20000",
+              "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+              "maxTimeoutSeconds": 60,
+              "extra": {
+                "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+              }
+            }
+          ]
+        },
+        "x-latency-ms": {
+          "full": 15
+        },
+        "x-freshness-s": {
+          "full": 2
         }
       }
     },
     "/v1/creator/{address}": {
       "get": {
-        "summary": "Creator View",
-        "operationId": "creator_view_v1_creator__address__get",
+        "summary": "Creator reputation over our full launch history",
+        "operationId": "creator",
         "parameters": [
           {
             "name": "address",
@@ -459,15 +969,50 @@
             "schema": {
               "type": "string",
               "title": "Address"
-            }
+            },
+            "description": "base58 wallet address"
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Paid response (header PAYMENT-RESPONSE carries the settlement)",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                "examples": {
+                  "full": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "full",
+                      "data": {
+                        "creator": "…",
+                        "stats": {
+                          "n_launches": 63,
+                          "n_resolved": 60,
+                          "grad_rate": 0.0,
+                          "rug_rate": 0.71,
+                          "median_dev_sell_s": 14.2,
+                          "is_first_time": false
+                        },
+                        "recent_launches": [
+                          {
+                            "mint": "…",
+                            "t0": 1788600000.0,
+                            "graduated": 0,
+                            "rugged": 1,
+                            "rug_dt_s": 22.0,
+                            "peak_rs": 6.1
+                          }
+                        ],
+                        "live_mints": [],
+                        "funded_recently_by": null
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -482,25 +1027,68 @@
             }
           },
           "402": {
-            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+            "description": "Payment required (x402 v2): header PAYMENT-REQUIRED = base64 of the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "the path parameter is not a base58 public key ({ok:false, error, hint})"
           }
         },
+        "description": "Creator reputation: look-ahead-safe stats over every launch we have seen from this wallet (n_launches, resolved, graduations witnessed at >= 84 SOL, rugs by drain or dev dump, median seconds to the dev's first sell, total dev buys), the last 25 launches with outcomes, the creator's live mints right now, and whether the wallet was funded in the last 30 min (warm launch). Empty stats (is_first_time=true) for a wallet we never saw launch.",
+        "tags": [
+          "paid"
+        ],
         "x-payment-info": {
           "protocol": "x402",
+          "protocols": [
+            "x402"
+          ],
           "x402Version": 2,
           "scheme": "exact",
           "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
           "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "assetSymbol": "USDC",
           "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
-          "price": "$0.02",
-          "priceUsd": 0.02
+          "facilitator": "https://facilitator.payai.network",
+          "price": {
+            "mode": "fixed",
+            "amount": "0.02",
+            "currency": "USD"
+          },
+          "priceUsd": 0.02,
+          "amountMicroUsdc": "20000",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "amount": "20000",
+              "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+              "maxTimeoutSeconds": 60,
+              "extra": {
+                "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+              }
+            }
+          ]
+        },
+        "x-latency-ms": {
+          "full": 20
+        },
+        "x-freshness-s": {
+          "full": 2
         }
       }
     },
     "/v1/wallet/{address}": {
       "get": {
-        "summary": "Wallet View",
-        "operationId": "wallet_view_v1_wallet__address__get",
+        "summary": "Wallet class from our rolling PnL leaderboard + live holdings",
+        "operationId": "wallet",
         "parameters": [
           {
             "name": "address",
@@ -509,15 +1097,47 @@
             "schema": {
               "type": "string",
               "title": "Address"
-            }
+            },
+            "description": "base58 wallet address"
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "Paid response (header PAYMENT-RESPONSE carries the settlement)",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                "examples": {
+                  "full": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "full",
+                      "data": {
+                        "wallet": "…",
+                        "leaderboard": {
+                          "class": "sniper",
+                          "rank": 17,
+                          "stats": {
+                            "n_positions": 120,
+                            "realized_sol": 14.2
+                          }
+                        },
+                        "as_creator": null,
+                        "live_holdings_recent_mints": [
+                          {
+                            "mint": "…",
+                            "tokens_share": 0.012,
+                            "first_buy_slot": 445600000,
+                            "rs_sol": 4.1
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -532,18 +1152,446 @@
             }
           },
           "402": {
-            "description": "Payment required (x402 v2, header PAYMENT-REQUIRED)"
+            "description": "Payment required (x402 v2): header PAYMENT-REQUIRED = base64 of the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "the path parameter is not a base58 public key ({ok:false, error, hint})"
           }
         },
+        "description": "Wallet profile: class from our rolling 3-day realised-PnL leaderboard over every pump.fun trade we captured (insider / sniper / skilled / crowd, with rank and stats), holdings among the last 3000 mints (token share, first-buy slot, curve SOL now), creator stats if the wallet ever launched, and recent funding source. Use it to weight the buyers on a curve.",
+        "tags": [
+          "paid"
+        ],
         "x-payment-info": {
           "protocol": "x402",
+          "protocols": [
+            "x402"
+          ],
           "x402Version": 2,
           "scheme": "exact",
           "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
           "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "assetSymbol": "USDC",
           "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
-          "price": "$0.02",
-          "priceUsd": 0.02
+          "facilitator": "https://facilitator.payai.network",
+          "price": {
+            "mode": "fixed",
+            "amount": "0.02",
+            "currency": "USD"
+          },
+          "priceUsd": 0.02,
+          "amountMicroUsdc": "20000",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "amount": "20000",
+              "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+              "maxTimeoutSeconds": 60,
+              "extra": {
+                "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+              }
+            }
+          ]
+        },
+        "x-latency-ms": {
+          "full": 20
+        },
+        "x-freshness-s": {
+          "full": 2
+        }
+      }
+    },
+    "/v1/rhc/regime": {
+      "get": {
+        "summary": "Rhc Regime",
+        "operationId": "rhc_regime_v1_rhc_regime_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "description": "Robinhood Chain (Pons V2) regime meter: launches/h, graduations/h and rate, median launch-to-graduation seconds, curve buys/sells per minute, unique buyers (free)",
+        "tags": [
+          "free"
+        ]
+      }
+    },
+    "/v1/rhc/launches/recent": {
+      "get": {
+        "summary": "Robinhood Chain (Pons V2) recent launches with holder / route / cluster structure",
+        "operationId": "rhc_launches",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "max items"
+          },
+          {
+            "name": "max_age_s",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 21600,
+              "minimum": 30,
+              "default": 3600.0,
+              "title": "Max Age S"
+            },
+            "description": "only launches within this many seconds"
+          },
+          {
+            "name": "pair",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(any|eth)$",
+              "default": "any",
+              "title": "Pair"
+            },
+            "description": "eth = only ETH-paired curves (price multiple defined)"
+          },
+          {
+            "name": "only_live",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Only Live"
+            },
+            "description": "drop completed / graduated curves"
+          },
+          {
+            "name": "min_buys",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Min Buys"
+            },
+            "description": "minimum curve buys observed"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paid response (header PAYMENT-RESPONSE carries the settlement)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                "examples": {
+                  "full": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "full",
+                      "data": {
+                        "count": 1,
+                        "items": [
+                          {
+                            "curve": "0x1d63…a855",
+                            "token": "0x57b4…97db",
+                            "age_s": 52.5,
+                            "status": "live_curve",
+                            "coverage": "full",
+                            "raised": {
+                              "eth": 0.120987,
+                              "progress": 0.0288,
+                              "price_multiple_vs_launch": 1.1492
+                            },
+                            "structure": {
+                              "n_holders": 6,
+                              "top1_share": 0.6777,
+                              "same_block_direct_cluster_share": 0.0834,
+                              "direct_buy_share": 0.9062,
+                              "terminal_holdings_share": 0.1987
+                            },
+                            "flow": {
+                              "n_buys": 32,
+                              "n_sells": 30,
+                              "unique_buyers": 31,
+                              "new_buyers_last_6s": 0,
+                              "last_trade_age_s": 33.1
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required (x402 v2): header PAYMENT-REQUIRED = base64 of the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequired"
+                }
+              }
+            }
+          }
+        },
+        "description": "Recent Pons V2 launches on Robinhood Chain (chain 4663; default last hour, newest first) as compact structure cards computed from observed on-chain activity: raised (ETH), progress to the 4.2 ETH graduation, price multiple vs launch, snipe-tax activity, holder concentration (top-1 / top-5 / HHI), same-block direct-buy cluster share (matching timing, not proof of coordination), terminal-vs-direct route mix with the terminal router transactions joined to their wallets, inflow (new buyers in the last 2 / 6 s), lifecycle (live / complete / graduated). Filter pair=eth for ETH-paired curves, min_buys to skip dead launches.",
+        "tags": [
+          "paid"
+        ],
+        "x-payment-info": {
+          "protocol": "x402",
+          "protocols": [
+            "x402"
+          ],
+          "x402Version": 2,
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "assetSymbol": "USDC",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "facilitator": "https://facilitator.payai.network",
+          "price": {
+            "mode": "fixed",
+            "amount": "0.01",
+            "currency": "USD"
+          },
+          "priceUsd": 0.01,
+          "amountMicroUsdc": "10000",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "amount": "10000",
+              "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+              "maxTimeoutSeconds": 60,
+              "extra": {
+                "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+              }
+            }
+          ]
+        },
+        "x-latency-ms": {
+          "full": 60
+        },
+        "x-freshness-s": {
+          "full": 3
+        }
+      }
+    },
+    "/v1/rhc/curve/{address}": {
+      "get": {
+        "summary": "Robinhood Chain (Pons V2) curve structure card for one curve or token address",
+        "operationId": "rhc_curve",
+        "parameters": [
+          {
+            "name": "address",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Address"
+            },
+            "description": "0x-prefixed 40-hex Pons V2 curve OR token address on Robinhood Chain"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paid response (header PAYMENT-RESPONSE carries the settlement)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                },
+                "examples": {
+                  "full": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "full",
+                      "data": {
+                        "curve": "0x1d63…a855",
+                        "token": "0x57b4…97db",
+                        "deployer": "0x5e52…7c97",
+                        "pair_token": "0x0000000000000000000000000000000000000000",
+                        "pair_kind": "eth",
+                        "launch_block": 58633592,
+                        "launched_at": 1788965713.3,
+                        "age_s": 52.5,
+                        "coverage": "full",
+                        "status": "live_curve",
+                        "raised": {
+                          "quote_units": "120987126950004875",
+                          "eth": 0.120987,
+                          "progress": 0.0288,
+                          "price_multiple_vs_launch": 1.1492
+                        },
+                        "snipe_tax": {
+                          "in_tax_window": false,
+                          "n_taxed_buys": 10,
+                          "tax_total_eth": 0.014421
+                        },
+                        "structure": {
+                          "n_holders": 6,
+                          "top1_share": 0.6777,
+                          "top5_share": 0.9744,
+                          "hhi": 0.5026,
+                          "deployer_holding_share": 0.0,
+                          "same_block_direct_cluster_share": 0.0834,
+                          "same_block_direct_cluster_wallets": 26,
+                          "max_direct_buys_in_one_block": 16,
+                          "direct_buy_share": 0.9062,
+                          "terminal_buy_share": 0.0938,
+                          "terminal_holdings_share": 0.1987,
+                          "routes": {
+                            "direct": 29,
+                            "gmgn": 2,
+                            "pons_launchbuy": 1
+                          },
+                          "router_join_resolved_share": 0.9062
+                        },
+                        "flow": {
+                          "n_buys": 32,
+                          "n_sells": 30,
+                          "unique_buyers": 31,
+                          "unique_sellers": 29,
+                          "buys_last_6s": 1,
+                          "sells_last_6s": 2,
+                          "new_buyers_last_2s": 0,
+                          "new_buyers_last_6s": 0,
+                          "first_buy_after_s": 0.0,
+                          "last_trade_age_s": 33.1,
+                          "buy_volume_eth": 1.001847,
+                          "sell_volume_eth": 0.88086
+                        },
+                        "lifecycle": {
+                          "completed_block": null,
+                          "graduated_block": null,
+                          "graduated_after_s": null,
+                          "n_refunds": 0
+                        }
+                      }
+                    }
+                  },
+                  "thin": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "thin",
+                      "data": {
+                        "address": "0x…",
+                        "coverage": "thin",
+                        "known": false,
+                        "status": "unknown",
+                        "coverage_reason": "not a Pons V2 curve/token launched in the last 6 h"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required (x402 v2): header PAYMENT-REQUIRED = base64 of the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "the path parameter is not a base58 public key ({ok:false, error, hint})"
+          }
+        },
+        "description": "Full structure card for ONE Pons V2 curve on Robinhood Chain, addressed by curve or token address (0x…): launch facts (block, deployer, pair token, graduation threshold), raised / progress / price multiple vs launch (ETH-paired curves), snipe-tax activity, holder ledger concentration (top-1 / top-5 / HHI / deployer share), same-block direct-buy cluster share and wallets, max direct buys in one 100 ms block, terminal-vs-direct route mix with terminal holdings share, flow (buys / sells / unique buyers / new buyers in the last 2 and 6 s / last trade age / volumes), lifecycle (completed / graduated blocks and delays, refunds). coverage=full for curves launched inside our event window (last ~2 h, trades observed from block 0); thin = launch facts + lifecycle only, with a reason. Always 200 for a valid address.",
+        "tags": [
+          "paid"
+        ],
+        "x-payment-info": {
+          "protocol": "x402",
+          "protocols": [
+            "x402"
+          ],
+          "x402Version": 2,
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "assetSymbol": "USDC",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "facilitator": "https://facilitator.payai.network",
+          "price": {
+            "mode": "fixed",
+            "amount": "0.02",
+            "currency": "USD"
+          },
+          "priceUsd": 0.02,
+          "amountMicroUsdc": "20000",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "amount": "20000",
+              "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+              "maxTimeoutSeconds": 60,
+              "extra": {
+                "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+              }
+            }
+          ]
+        },
+        "x-latency-ms": {
+          "full": 20
+        },
+        "x-freshness-s": {
+          "full": 3
         }
       }
     }
@@ -602,12 +1650,135 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "Envelope": {
+        "type": "object",
+        "required": [
+          "ok",
+          "schema_version",
+          "generated_at",
+          "t",
+          "coverage",
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "schema_version": {
+            "type": "string",
+            "const": "2.0"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "t": {
+            "type": "number",
+            "description": "unix seconds at generation"
+          },
+          "coverage": {
+            "type": "string",
+            "enum": [
+              "full",
+              "thin"
+            ],
+            "description": "the mint is inside our live window (created while our captur / thin = the mint is not in the live window (older than ~2 h of silen"
+          },
+          "data": {
+            "type": "object",
+            "example": {
+              "...": "route specific"
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "feed_lag_s": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "seconds between the newest event in our tape and now"
+              },
+              "is_stale": {
+                "type": "boolean",
+                "description": "true when feed_lag_s > 30"
+              },
+              "last_slot": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "price_usd": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "next": {
+                "type": "object",
+                "description": "related resources worth calling next (paths relative to base_url)"
+              },
+              "disclaimer": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "PaymentRequired": {
+        "type": "object",
+        "description": "x402 v2 PaymentRequired (also base64 in the PAYMENT-REQUIRED header)",
+        "properties": {
+          "x402Version": {
+            "type": "integer",
+            "const": 2
+          },
+          "error": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "object"
+          },
+          "accepts": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "extensions": {
+            "type": "object"
+          }
+        }
       }
     }
   },
   "servers": [
     {
       "url": "https://api.loopholetape.com"
+    }
+  ],
+  "tags": [
+    {
+      "name": "paid",
+      "description": "x402-paid resources (USDC on Solana mainnet)"
+    },
+    {
+      "name": "free",
+      "description": "no payment"
+    },
+    {
+      "name": "discovery",
+      "description": "machine-readable descriptions of this service"
     }
   ]
 }
