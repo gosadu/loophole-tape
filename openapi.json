@@ -1594,6 +1594,74 @@
           "full": 3
         }
       }
+    },
+    "/v1/rhc/curve": {
+      "get": {
+        "summary": " Address Required",
+        "description": "Bare paths exist so directory crawlers get the 402 they probe for; a real call needs the address in the path (nothing is settled here).",
+        "operationId": "_address_required_v1_rhc_curve_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/wallet": {
+      "get": {
+        "summary": " Address Required",
+        "description": "Bare paths exist so directory crawlers get the 402 they probe for; a real call needs the address in the path (nothing is settled here).",
+        "operationId": "_address_required_v1_wallet_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/creator": {
+      "get": {
+        "summary": " Address Required",
+        "description": "Bare paths exist so directory crawlers get the 402 they probe for; a real call needs the address in the path (nothing is settled here).",
+        "operationId": "_address_required_v1_creator_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mint": {
+      "get": {
+        "summary": " Address Required",
+        "description": "Bare paths exist so directory crawlers get the 402 they probe for; a real call needs the address in the path (nothing is settled here).",
+        "operationId": "_address_required_v1_mint_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
