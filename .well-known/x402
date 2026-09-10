@@ -10,6 +10,7 @@
   "labels": "https://api.loopholetape.com/v1/labels",
   "contact": "https://github.com/gosadu/loophole-tape",
   "terms": "https://api.loopholetape.com/terms",
+  "agentToolsVerify": "atc_1BjMxoVcXPYPx5qlLvoQ_l5Imk7adqBE",
   "networks": [
     "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"
   ],
@@ -887,5 +888,5 @@
     "https://api.loopholetape.com/mcp",
     "https://api.loopholetape.com/terms"
   ],
-  "updated": "2026-09-10T01:41:07Z"
+  "updated": "2026-09-10T02:50:52Z"
 }
