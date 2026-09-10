@@ -3,8 +3,8 @@
   "x402Version": 2,
   "kind": "resource-server",
   "name": "loophole tape",
-  "service_version": "0.3.0",
-  "description": "Real-time labelled pump.fun / PumpSwap intelligence derived from public on-chain data — per-mint risk cards (curve truth, demand, holder concentration, create-slot bundle/insider shares, creator prior, rug flags within seconds), launch / rug / graduation feeds, creator and wallet reputation. Pay per request in USDC on Solana mainnet (x402 exact, PayAI facilitator). Free: market regime, samples, health.",
+  "service_version": "0.4.0",
+  "description": "Compact pump.fun risk checks: $0.005 for one mint, $0.01 total for up to five. Free coverage and event-update checks; full live coverage and <= 5 s feed lag required. Real-time intelligence derived from public on-chain data — per-mint risk cards (curve truth, demand, holder concentration, create-slot bundle/insider shares, creator prior, rug flags within seconds), launch / rug / graduation feeds, creator and wallet reputation. Pay per request in USDC on Solana mainnet (x402 exact, PayAI facilitator). Free: market regime, samples, health, coverage and watch availability.",
   "docs": "https://api.loopholetape.com/llms.txt",
   "openapi": "https://api.loopholetape.com/openapi.json",
   "labels": "https://api.loopholetape.com/v1/labels",
@@ -665,9 +665,213 @@
           }
         }
       }
+    },
+    {
+      "url": "https://api.loopholetape.com/v1/check/mint/{mint}",
+      "method": "GET",
+      "description": "Check one pump.fun mint for observed launch risks ($0.005). Compact check before a swap or during position monitoring: creator exits, early-wallet selling, curve/pool drains, migration classification, concentration and buyer flow. Findings include first-observed times and numeric",
+      "price": "$0.005",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "amount": "5000",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "maxTimeoutSeconds": 60,
+          "extra": {
+            "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+          }
+        }
+      ],
+      "inputSchema": {
+        "type": "http",
+        "method": "GET",
+        "pathParams": {
+          "mint": {
+            "type": "string",
+            "description": "A pump.fun mint with full live coverage; check /v1/check/coverage first.",
+            "example": "73sfnFgqQzpSRZSimCC4sxpubqghRGYewYLmiUH2pump"
+          }
+        },
+        "queryParams": {
+          "cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1024,
+            "description": "Optional opaque watch cursor for these exact mints; no new watched events returns an unpaid result."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "json",
+        "example": {
+          "ok": true,
+          "coverage": "full",
+          "data": {
+            "status": "flags_observed",
+            "result_id": "risk_example",
+            "count": 1,
+            "items": [
+              {
+                "mint": "73sfnFgqQzpSRZSimCC4sxpubqghRGYewYLmiUH2pump",
+                "status": "flags_observed",
+                "lifecycle": "live_curve",
+                "risk_label": "rug_flagged",
+                "findings": [
+                  {
+                    "code": "creator_sold",
+                    "first_seen_at": 1788990000,
+                    "evidence": {
+                      "tokens_share": 0.12
+                    }
+                  }
+                ],
+                "snapshot_slot": 445000001,
+                "last_trade_at": 1788990001,
+                "concentration": {
+                  "top5_share": 0.51,
+                  "dev_share": 0.03,
+                  "bundle_share": 0.2,
+                  "insider_share": 0.1
+                },
+                "buyer_flow": {
+                  "unique_buyers_60s": 12,
+                  "buys_60s": 18,
+                  "sells_60s": 6,
+                  "net_sol_60s": 0.2,
+                  "inflow_stalled": false
+                },
+                "curve": {
+                  "rs_sol": 5.0,
+                  "peak_rs_sol": 6.0,
+                  "drawdown_from_peak": 0.1667,
+                  "graduated": null
+                },
+                "full_card_url": "https://api.loopholetape.com/v1/mint/73sfnFgqQzpSRZSimCC4sxpubqghRGYewYLmiUH2pump"
+              }
+            ],
+            "cursor": "opaque-watch-cursor",
+            "watch_events": [
+              "creator_sold",
+              "bundle_dumped",
+              "curve_drained",
+              "pool_drained",
+              "curve_closed_low",
+              "migrate_below_grad",
+              "lifecycle_transition"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "url": "https://api.loopholetape.com/v1/check/watchlist",
+      "method": "GET",
+      "description": "Check up to five pump.fun mints for $0.01 total. One payment checks one to five caller-selected pump.fun mints for observed creator exits, bundle selling, drains and migration state, with compact concentration/flow measurements and timestamped evidence. Every mint must",
+      "price": "$0.01",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "amount": "10000",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "maxTimeoutSeconds": 60,
+          "extra": {
+            "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+          }
+        }
+      ],
+      "inputSchema": {
+        "type": "http",
+        "method": "GET",
+        "pathParams": null,
+        "queryParams": {
+          "mints": {
+            "type": "string",
+            "maxLength": 224,
+            "example": "73sfnFgqQzpSRZSimCC4sxpubqghRGYewYLmiUH2pump",
+            "description": "One to five distinct mint addresses, comma-separated (MCP accepts an array)."
+          },
+          "cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1024,
+            "description": "Optional opaque watch cursor for these exact mints; no new watched events returns an unpaid result."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "json",
+        "example": {
+          "ok": true,
+          "coverage": "full",
+          "data": {
+            "status": "flags_observed",
+            "result_id": "risk_example",
+            "count": 1,
+            "items": [
+              {
+                "mint": "73sfnFgqQzpSRZSimCC4sxpubqghRGYewYLmiUH2pump",
+                "status": "flags_observed",
+                "lifecycle": "live_curve",
+                "risk_label": "rug_flagged",
+                "findings": [
+                  {
+                    "code": "creator_sold",
+                    "first_seen_at": 1788990000,
+                    "evidence": {
+                      "tokens_share": 0.12
+                    }
+                  }
+                ],
+                "snapshot_slot": 445000001,
+                "last_trade_at": 1788990001,
+                "concentration": {
+                  "top5_share": 0.51,
+                  "dev_share": 0.03,
+                  "bundle_share": 0.2,
+                  "insider_share": 0.1
+                },
+                "buyer_flow": {
+                  "unique_buyers_60s": 12,
+                  "buys_60s": 18,
+                  "sells_60s": 6,
+                  "net_sol_60s": 0.2,
+                  "inflow_stalled": false
+                },
+                "curve": {
+                  "rs_sol": 5.0,
+                  "peak_rs_sol": 6.0,
+                  "drawdown_from_peak": 0.1667,
+                  "graduated": null
+                },
+                "full_card_url": "https://api.loopholetape.com/v1/mint/73sfnFgqQzpSRZSimCC4sxpubqghRGYewYLmiUH2pump"
+              }
+            ],
+            "cursor": "opaque-watch-cursor",
+            "watch_events": [
+              "creator_sold",
+              "bundle_dumped",
+              "curve_drained",
+              "pool_drained",
+              "curve_closed_low",
+              "migrate_below_grad",
+              "lifecycle_transition"
+            ]
+          }
+        }
+      }
     }
   ],
   "free_resources": [
+    "https://api.loopholetape.com/v1/check/coverage",
+    "https://api.loopholetape.com/v1/check/watch",
     "https://api.loopholetape.com/",
     "https://api.loopholetape.com/health",
     "https://api.loopholetape.com/v1/market/regime",
@@ -683,5 +887,5 @@
     "https://api.loopholetape.com/mcp",
     "https://api.loopholetape.com/terms"
   ],
-  "updated": "2026-09-10T00:14:35Z"
+  "updated": "2026-09-10T01:41:07Z"
 }

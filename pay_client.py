@@ -1,5 +1,5 @@
 """Paying-client check for the tape API (also the integrator reference): buys ONE priced call from the public URL with the
-official x402 client, paying USDC from a Solana keypair JSON (path in env TAPE_PAYER_KEYPAIR, default ~/.config/solana/payer.json). Setup: pip install "x402[httpx,svm]==2.22.0" && pip install "solana==0.36.7"
+official x402 client, paying USDC from a Solana keypair JSON (path in env TAPE_PAYER_KEYPAIR, default ~/.config/solana/payer.json). Setup: pip install -r requirements-client.txt
   python pay_client.py [base_url] [path]
 Costs the route price (1 to 2.5 cents). Prints status, settlement (tx signature) and the body head."""
 import asyncio, base64, json, os, sys, time

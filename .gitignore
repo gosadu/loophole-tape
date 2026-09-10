@@ -1,3 +1,8 @@
 __pycache__/
 *.pyc
 *.json.bak
+node_modules/
+.venv/
+buyer-state*.json
+buyer-state*.json.lock
+.buyer-state-*

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.gosadu/loophole-tape",
+  "description": "Pump.fun risk checks: $0.005/mint or $0.01/5. Free coverage/watch. x402 USDC, HTTP + MCP.",
+  "repository": {
+    "url": "https://github.com/gosadu/loophole-tape",
+    "source": "github"
+  },
+  "version": "0.4.0",
+  "websiteUrl": "https://api.loopholetape.com",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.loopholetape.com/mcp"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+# Install in a fresh Python 3.12+ venv. Omitting the svm extra avoids its
+# solders>=0.27 constraint conflicting with solana 0.36.7's solders<0.27.
+x402[httpx,extensions]==2.22.0
+solana==0.36.7

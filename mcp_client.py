@@ -1,6 +1,6 @@
 """MCP paying-client check for the tape API: connects to <base>/mcp over streamable HTTP, lists tools, calls the free
 market_regime tool, then buys one paid tool call with x402 over MCP (USDC from TAPE_PAYER_KEYPAIR, default
-~/.config/solana/payer.json). Setup: pip install "x402[httpx,svm]==2.22.0" && pip install "solana==0.36.7" "mcp<2"
+~/.config/solana/payer.json). Setup: pip install -r requirements-client.txt "mcp<2"
   TAPE_PAYER_KEYPAIR=~/.config/solana/payer.json python mcp_client.py [base_url] [tool] [json-args]
 """
 import asyncio, json, os, sys, time

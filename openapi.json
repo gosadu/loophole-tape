@@ -3,8 +3,8 @@
   "info": {
     "title": "loophole tape",
     "description": "Live pump.fun / PumpSwap analytics derived from public on-chain data. Pay per request in USDC on Solana through x402. See the documented routes for coverage and freshness.",
-    "version": "0.3.0",
-    "x-guidance": "Machine-payable pump.fun intelligence. Call /v1/x402/resources or /llms.txt first. Paid GET routes return 402 with the x402 v2 PAYMENT-REQUIRED header (and the same JSON in the body); pay USDC on Solana mainnet (exact scheme, PayAI facilitator) and retry with PAYMENT-SIGNATURE. Every response is {ok, schema_version, generated_at, coverage: full|thin, data, meta{feed_lag_s, is_stale, next}}. Free: /v1/market/regime, /v1/sample/*, /health, /v1/labels. MCP at /mcp.",
+    "version": "0.4.0",
+    "x-guidance": "Machine-payable pump.fun intelligence. Call /v1/x402/resources or /llms.txt first. Paid GET routes return 402 with the x402 v2 PAYMENT-REQUIRED header (and the same JSON in the body); pay USDC on Solana mainnet (exact scheme, PayAI facilitator) and retry with PAYMENT-SIGNATURE. Every response is {ok, schema_version, generated_at, coverage: full|thin, data, meta{feed_lag_s, is_stale, next}}. Compact checks cost $0.005 for one mint or $0.01 total for up to five; full coverage and feed lag <= 5 s required. Free: /v1/check/coverage, /v1/check/watch, /v1/market/regime, /v1/sample/*, /health, /v1/labels. MCP at /mcp.",
     "contact": {
       "name": "loophole tape",
       "url": "https://github.com/gosadu/loophole-tape"
@@ -1230,6 +1230,514 @@
         ]
       }
     },
+    "/v1/check/coverage": {
+      "get": {
+        "summary": "Check Coverage",
+        "operationId": "check_coverage_v1_check_coverage_get",
+        "parameters": [
+          {
+            "name": "mints",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 224,
+              "description": "One to five comma-separated mint addresses",
+              "title": "Mints"
+            },
+            "description": "One to five comma-separated mint addresses"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "description": "free coverage and freshness check for one to five mints; quotes single and batch prices",
+        "tags": [
+          "free"
+        ]
+      }
+    },
+    "/v1/check/watch": {
+      "get": {
+        "summary": "Watchlist Updates",
+        "operationId": "watchlist_updates_v1_check_watch_get",
+        "parameters": [
+          {
+            "name": "mints",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 224,
+              "title": "Mints"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 1024
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "description": "free availability of new risk/lifecycle events for a watchlist; opaque cursor, no event details",
+        "tags": [
+          "free"
+        ]
+      }
+    },
+    "/v1/check/mint/{mint}": {
+      "get": {
+        "summary": "Check one pump.fun mint for observed launch risks ($0.005)",
+        "operationId": "risk",
+        "parameters": [
+          {
+            "name": "mint",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mint"
+            },
+            "description": "A pump.fun mint with full live coverage; check /v1/check/coverage first."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 1024
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            },
+            "description": "Optional opaque watch cursor for these exact mints; no new watched events returns an unpaid result."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paid compact result or original receipt replay; an unchanged watch cursor returns an unpaid no_new_events result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskCheck"
+                },
+                "examples": {
+                  "full": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "full",
+                      "data": {
+                        "status": "flags_observed",
+                        "result_id": "risk_example",
+                        "count": 1,
+                        "items": [
+                          {
+                            "mint": "73sfnFgqQzpSRZSimCC4sxpubqghRGYewYLmiUH2pump",
+                            "status": "flags_observed",
+                            "lifecycle": "live_curve",
+                            "risk_label": "rug_flagged",
+                            "findings": [
+                              {
+                                "code": "creator_sold",
+                                "first_seen_at": 1788990000,
+                                "evidence": {
+                                  "tokens_share": 0.12
+                                }
+                              }
+                            ],
+                            "snapshot_slot": 445000001,
+                            "last_trade_at": 1788990001,
+                            "concentration": {
+                              "top5_share": 0.51,
+                              "dev_share": 0.03,
+                              "bundle_share": 0.2,
+                              "insider_share": 0.1
+                            },
+                            "buyer_flow": {
+                              "unique_buyers_60s": 12,
+                              "buys_60s": 18,
+                              "sells_60s": 6,
+                              "net_sol_60s": 0.2,
+                              "inflow_stalled": false
+                            },
+                            "curve": {
+                              "rs_sol": 5.0,
+                              "peak_rs_sol": 6.0,
+                              "drawdown_from_peak": 0.1667,
+                              "graduated": null
+                            },
+                            "full_card_url": "https://api.loopholetape.com/v1/mint/73sfnFgqQzpSRZSimCC4sxpubqghRGYewYLmiUH2pump"
+                          }
+                        ],
+                        "cursor": "opaque-watch-cursor",
+                        "watch_events": [
+                          "creator_sold",
+                          "bundle_dumped",
+                          "curve_drained",
+                          "pool_drained",
+                          "curve_closed_low",
+                          "migrate_below_grad",
+                          "lifecycle_transition"
+                        ]
+                      },
+                      "generated_at": "2026-09-10T00:00:00Z",
+                      "t": 1788998400,
+                      "meta": {
+                        "version": "0.4.0",
+                        "feed_lag_s": 0.5,
+                        "is_stale": false,
+                        "max_feed_lag_s": 5,
+                        "price_usd": 0.005,
+                        "labels": "/v1/labels"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required (x402 v2): header PAYMENT-REQUIRED = base64 of the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "At least one requested mint lacks full live coverage; unpaid."
+          },
+          "400": {
+            "description": "Invalid mint list or cursor; unpaid."
+          },
+          "409": {
+            "description": "Payment/request conflict, or original settlement outcome unknown. If charged=null, reconcile before authorizing another payment."
+          },
+          "410": {
+            "description": "Watch cursor expired after 24 hours; initialize a new free watch or omit it for a fresh paid check."
+          },
+          "429": {
+            "description": "Request limit reached; retry after the Retry-After interval."
+          },
+          "503": {
+            "description": "Feed lag exceeds 5 s or checks unavailable; no new settlement. A retry-store failure reports charged=null if outcome is uncertain."
+          }
+        },
+        "description": "Compact check before a swap or during position monitoring: creator exits, early-wallet selling, curve/pool drains, migration classification, concentration and buyer flow. Findings include first-observed times and numeric evidence. Full coverage and feed lag <= 5 s required; stale/unavailable data is unpaid. Optional cursor: no new watched events is unpaid. No flags observed is not a safety guarantee. Exact signed-payment retries recover the original result for 10 min without a new settlement; timestamps identify its age.",
+        "tags": [
+          "paid"
+        ],
+        "x-payment-info": {
+          "protocol": "x402",
+          "protocols": [
+            "x402"
+          ],
+          "x402Version": 2,
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "assetSymbol": "USDC",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "facilitator": "https://facilitator.payai.network",
+          "price": {
+            "mode": "fixed",
+            "amount": "0.005",
+            "currency": "USD"
+          },
+          "priceUsd": 0.005,
+          "amountMicroUsdc": "5000",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "amount": "5000",
+              "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+              "maxTimeoutSeconds": 60,
+              "extra": {
+                "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+              }
+            }
+          ]
+        },
+        "x-latency-ms": {
+          "full": null
+        },
+        "x-freshness-s": {
+          "full": 5
+        }
+      }
+    },
+    "/v1/check/watchlist": {
+      "get": {
+        "summary": "Check up to five pump.fun mints for $0.01 total",
+        "operationId": "risk_batch",
+        "parameters": [
+          {
+            "name": "mints",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 224,
+              "title": "Mints"
+            },
+            "description": "One to five distinct mint addresses, comma-separated (MCP accepts an array)."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 1024
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            },
+            "description": "Optional opaque watch cursor for these exact mints; no new watched events returns an unpaid result."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paid compact result or original receipt replay; an unchanged watch cursor returns an unpaid no_new_events result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskCheck"
+                },
+                "examples": {
+                  "full": {
+                    "value": {
+                      "ok": true,
+                      "schema_version": "2.0",
+                      "coverage": "full",
+                      "data": {
+                        "status": "flags_observed",
+                        "result_id": "risk_example",
+                        "count": 1,
+                        "items": [
+                          {
+                            "mint": "73sfnFgqQzpSRZSimCC4sxpubqghRGYewYLmiUH2pump",
+                            "status": "flags_observed",
+                            "lifecycle": "live_curve",
+                            "risk_label": "rug_flagged",
+                            "findings": [
+                              {
+                                "code": "creator_sold",
+                                "first_seen_at": 1788990000,
+                                "evidence": {
+                                  "tokens_share": 0.12
+                                }
+                              }
+                            ],
+                            "snapshot_slot": 445000001,
+                            "last_trade_at": 1788990001,
+                            "concentration": {
+                              "top5_share": 0.51,
+                              "dev_share": 0.03,
+                              "bundle_share": 0.2,
+                              "insider_share": 0.1
+                            },
+                            "buyer_flow": {
+                              "unique_buyers_60s": 12,
+                              "buys_60s": 18,
+                              "sells_60s": 6,
+                              "net_sol_60s": 0.2,
+                              "inflow_stalled": false
+                            },
+                            "curve": {
+                              "rs_sol": 5.0,
+                              "peak_rs_sol": 6.0,
+                              "drawdown_from_peak": 0.1667,
+                              "graduated": null
+                            },
+                            "full_card_url": "https://api.loopholetape.com/v1/mint/73sfnFgqQzpSRZSimCC4sxpubqghRGYewYLmiUH2pump"
+                          }
+                        ],
+                        "cursor": "opaque-watch-cursor",
+                        "watch_events": [
+                          "creator_sold",
+                          "bundle_dumped",
+                          "curve_drained",
+                          "pool_drained",
+                          "curve_closed_low",
+                          "migrate_below_grad",
+                          "lifecycle_transition"
+                        ]
+                      },
+                      "generated_at": "2026-09-10T00:00:00Z",
+                      "t": 1788998400,
+                      "meta": {
+                        "version": "0.4.0",
+                        "feed_lag_s": 0.5,
+                        "is_stale": false,
+                        "max_feed_lag_s": 5,
+                        "price_usd": 0.01,
+                        "labels": "/v1/labels"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required (x402 v2): header PAYMENT-REQUIRED = base64 of the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequired"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid mint list or cursor; unpaid."
+          },
+          "404": {
+            "description": "At least one requested mint lacks full live coverage; unpaid."
+          },
+          "409": {
+            "description": "Payment/request conflict, or original settlement outcome unknown. If charged=null, reconcile before authorizing another payment."
+          },
+          "410": {
+            "description": "Watch cursor expired after 24 hours; initialize a new free watch or omit it for a fresh paid check."
+          },
+          "429": {
+            "description": "Request limit reached; retry after the Retry-After interval."
+          },
+          "503": {
+            "description": "Feed lag exceeds 5 s or checks unavailable; no new settlement. A retry-store failure reports charged=null if outcome is uncertain."
+          }
+        },
+        "description": "One payment checks one to five caller-selected pump.fun mints for observed creator exits, bundle selling, drains and migration state, with compact concentration/flow measurements and timestamped evidence. Every mint must have full coverage and feed lag <= 5 s; an unavailable batch is unpaid. Optional cursor: no new watched events is unpaid. Use /v1/check/watch for free update availability. Price is $0.01 total, not per mint. Findings describe observations, not predictions. Exact signed-payment retry cache: 10 minutes.",
+        "tags": [
+          "paid"
+        ],
+        "x-payment-info": {
+          "protocol": "x402",
+          "protocols": [
+            "x402"
+          ],
+          "x402Version": 2,
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "assetSymbol": "USDC",
+          "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+          "facilitator": "https://facilitator.payai.network",
+          "price": {
+            "mode": "fixed",
+            "amount": "0.01",
+            "currency": "USD"
+          },
+          "priceUsd": 0.01,
+          "amountMicroUsdc": "10000",
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+              "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+              "amount": "10000",
+              "payTo": "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT",
+              "maxTimeoutSeconds": 60,
+              "extra": {
+                "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww"
+              }
+            }
+          ]
+        },
+        "x-latency-ms": {
+          "full": null
+        },
+        "x-freshness-s": {
+          "full": 5
+        }
+      }
+    },
     "/v1/rhc/launches/recent": {
       "get": {
         "summary": "Robinhood Chain (Pons V2) recent launches with holder / route / cluster structure",
@@ -1778,7 +2286,7 @@
               },
               "is_stale": {
                 "type": "boolean",
-                "description": "true when feed_lag_s > 30"
+                "description": "feed exceeds the route's freshness limit (5 s for compact risk checks, 30 s otherwise)"
               },
               "last_slot": {
                 "type": [
@@ -1802,6 +2310,433 @@
             }
           }
         }
+      },
+      "RiskCheck": {
+        "properties": {
+          "ok": {
+            "const": true,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "schema_version": {
+            "const": "2.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "t": {
+            "title": "T",
+            "type": "number"
+          },
+          "coverage": {
+            "const": "full",
+            "title": "Coverage",
+            "type": "string"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "flags_observed",
+                      "no_flags_observed"
+                    ],
+                    "title": "Status",
+                    "type": "string"
+                  },
+                  "result_id": {
+                    "title": "Result Id",
+                    "type": "string"
+                  },
+                  "count": {
+                    "maximum": 5,
+                    "minimum": 1,
+                    "title": "Count",
+                    "type": "integer"
+                  },
+                  "items": {
+                    "items": {
+                      "properties": {
+                        "mint": {
+                          "title": "Mint",
+                          "type": "string"
+                        },
+                        "status": {
+                          "enum": [
+                            "flags_observed",
+                            "no_flags_observed"
+                          ],
+                          "title": "Status",
+                          "type": "string"
+                        },
+                        "lifecycle": {
+                          "title": "Lifecycle",
+                          "type": "string"
+                        },
+                        "risk_label": {
+                          "title": "Risk Label",
+                          "type": "string"
+                        },
+                        "findings": {
+                          "items": {
+                            "properties": {
+                              "code": {
+                                "title": "Code",
+                                "type": "string"
+                              },
+                              "first_seen_at": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "title": "First Seen At"
+                              },
+                              "evidence": {
+                                "additionalProperties": true,
+                                "title": "Evidence",
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "code",
+                              "first_seen_at",
+                              "evidence"
+                            ],
+                            "title": "Finding",
+                            "type": "object"
+                          },
+                          "title": "Findings",
+                          "type": "array"
+                        },
+                        "snapshot_slot": {
+                          "anyOf": [
+                            {
+                              "type": "integer"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Latest observed slot for this mint, not the slot of every finding.",
+                          "title": "Snapshot Slot"
+                        },
+                        "last_trade_at": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "title": "Last Trade At"
+                        },
+                        "concentration": {
+                          "properties": {
+                            "top5_share": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Top5 Share"
+                            },
+                            "dev_share": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Dev Share"
+                            },
+                            "bundle_share": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Bundle Share"
+                            },
+                            "insider_share": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Insider Share"
+                            }
+                          },
+                          "required": [
+                            "top5_share",
+                            "dev_share",
+                            "bundle_share",
+                            "insider_share"
+                          ],
+                          "title": "Concentration",
+                          "type": "object"
+                        },
+                        "buyer_flow": {
+                          "properties": {
+                            "unique_buyers_60s": {
+                              "anyOf": [
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Unique Buyers 60S"
+                            },
+                            "buys_60s": {
+                              "anyOf": [
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Buys 60S"
+                            },
+                            "sells_60s": {
+                              "anyOf": [
+                                {
+                                  "type": "integer"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Sells 60S"
+                            },
+                            "net_sol_60s": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Net Sol 60S"
+                            },
+                            "inflow_stalled": {
+                              "anyOf": [
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Inflow Stalled"
+                            }
+                          },
+                          "required": [
+                            "unique_buyers_60s",
+                            "buys_60s",
+                            "sells_60s",
+                            "net_sol_60s",
+                            "inflow_stalled"
+                          ],
+                          "title": "BuyerFlow",
+                          "type": "object"
+                        },
+                        "curve": {
+                          "properties": {
+                            "rs_sol": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Rs Sol"
+                            },
+                            "peak_rs_sol": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Peak Rs Sol"
+                            },
+                            "drawdown_from_peak": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Drawdown From Peak"
+                            },
+                            "graduated": {
+                              "anyOf": [
+                                {
+                                  "type": "boolean"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "title": "Graduated"
+                            }
+                          },
+                          "required": [
+                            "rs_sol",
+                            "peak_rs_sol",
+                            "drawdown_from_peak",
+                            "graduated"
+                          ],
+                          "title": "Curve",
+                          "type": "object"
+                        },
+                        "full_card_url": {
+                          "title": "Full Card Url",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "mint",
+                        "status",
+                        "lifecycle",
+                        "risk_label",
+                        "findings",
+                        "snapshot_slot",
+                        "last_trade_at",
+                        "concentration",
+                        "buyer_flow",
+                        "curve",
+                        "full_card_url"
+                      ],
+                      "title": "CheckItem",
+                      "type": "object"
+                    },
+                    "maxItems": 5,
+                    "minItems": 1,
+                    "title": "Items",
+                    "type": "array"
+                  },
+                  "cursor": {
+                    "title": "Cursor",
+                    "type": "string"
+                  },
+                  "watch_events": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "title": "Watch Events",
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "status",
+                  "result_id",
+                  "count",
+                  "items",
+                  "cursor",
+                  "watch_events"
+                ],
+                "title": "CheckData",
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "status": {
+                    "const": "no_new_events",
+                    "title": "Status",
+                    "type": "string"
+                  },
+                  "changed": {
+                    "const": false,
+                    "title": "Changed",
+                    "type": "boolean"
+                  },
+                  "count": {
+                    "const": 0,
+                    "title": "Count",
+                    "type": "integer"
+                  },
+                  "items": {
+                    "items": {},
+                    "maxItems": 0,
+                    "title": "Items",
+                    "type": "array"
+                  },
+                  "cursor": {
+                    "title": "Cursor",
+                    "type": "string"
+                  },
+                  "charged": {
+                    "const": false,
+                    "title": "Charged",
+                    "type": "boolean"
+                  },
+                  "next_check_after_s": {
+                    "title": "Next Check After S",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "status",
+                  "changed",
+                  "count",
+                  "items",
+                  "cursor",
+                  "charged",
+                  "next_check_after_s"
+                ],
+                "title": "NoChange",
+                "type": "object"
+              }
+            ],
+            "title": "Data"
+          },
+          "meta": {
+            "additionalProperties": true,
+            "title": "Meta",
+            "type": "object"
+          }
+        },
+        "required": [
+          "ok",
+          "schema_version",
+          "generated_at",
+          "t",
+          "coverage",
+          "data",
+          "meta"
+        ],
+        "title": "RiskEnvelope",
+        "type": "object"
       },
       "PaymentRequired": {
         "type": "object",
