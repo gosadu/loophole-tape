@@ -77,11 +77,13 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 | `GET /v1/wallet/{address}` | $0.02 | Wallet class from our rolling PnL leaderboard + live holdings |
 | `GET /v1/rhc/launches/recent` | $0.01 | Robinhood Chain (Pons V2) recent launches with holder / route / cluster structure |
 | `GET /v1/rhc/curve/{address}` | $0.02 | Robinhood Chain (Pons V2) curve structure card for one curve or token address |
-| `/`, `/health`, `/v1/market/regime`, `/v1/sample/launches`, `/v1/sample/rugs`, `/v1/sample/mint`, `/v1/x402/resources`, `/v1/labels`, `/v1/rhc/regime`, `/.well-known/x402`, `/openapi.json`, `/llms.txt`, `/mcp`, `/terms` | free | index, health, regime meters, delayed samples, discovery documents, labels, MCP, terms |
+| `/`, `/health`, `/v1/market/regime`, `/v1/sample/launches`, `/v1/sample/rugs`, `/v1/sample/mint`, `/v1/x402/resources`, `/v1/labels`, `/v1/rhc/regime`, `/.well-known/x402`, `/openapi.json`, `/llms.txt`, `/mcp`, `/terms`, `/.well-known/agent-card.json`, `/a2a`, `/.well-known/mcp-server-card`, `/.well-known/agents.json`, `/agents.txt`, `/.well-known/api-catalog` | free | index, health, regime meters, delayed samples, discovery documents, labels, MCP, terms |
 
 Every paid response is self-describing: `schema_version`, `generated_at`, `coverage`, and `meta` with freshness, source and related resources. The full `/v1/mint/{mint}` card supports both full live coverage and thin history/on-chain coverage. New compact checks require full coverage; an unavailable mint makes the entire requested batch unpaid. Label semantics: `/v1/labels`. Seven-day base rates are included in the existing full card.
 
 ## Discovery for agents
+
+Agent directories can read the A2A agent card at `/.well-known/agent-card.json` (the `/a2a` JSON-RPC endpoint answers `message/send` with the catalog, payment terms and the exact call for a named skill or mint), the MCP server card at `/.well-known/mcp-server-card`, `agents.json` flows at `/.well-known/agents.json`, `agents.txt`, and the RFC 9727 catalog at `/.well-known/api-catalog`.
 
 Use the live documents for current capabilities, schemas and prices:
 
