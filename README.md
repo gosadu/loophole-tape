@@ -10,6 +10,8 @@ Live pump.fun / PumpSwap analytics derived from public on-chain data. Pay per re
 
 Since v0.3.0 the same service also covers **Robinhood Chain (Pons V2 launchpad)**: launch feed and per-curve structure cards derived from public on-chain activity (raised/progress/price multiple, snipe-tax activity, holder concentration, same-block direct-buy cluster share, direct vs terminal route mix, new-buyer flow, lifecycle).
 
+Robinhood Chain two- and six-second flow counts expire against the response timestamp, even when no new trade arrives. Check `meta.is_stale` before interpreting zero activity; [field definitions](https://api.loopholetape.com/v1/labels) explain timestamp and coverage semantics.
+
 ## Routes
 
 | Route | Price (USDC) | What you get |
