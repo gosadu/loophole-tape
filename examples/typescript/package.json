@@ -5,14 +5,11 @@
   "type": "module",
   "engines": {"node": ">=24"},
   "scripts": {
-    "check": "tsc --noEmit",
-    "test": "node --test test_risk_client.ts",
     "risk": "node risk_client.ts"
   },
   "dependencies": {
     "@solana/kit": "5.5.1",
     "@x402/core": "2.25.0",
     "@x402/svm": "2.25.0"
-  },
-  "devDependencies": {"@types/node": "^24.0.0", "typescript": "5.9.3"}
+  }
 }

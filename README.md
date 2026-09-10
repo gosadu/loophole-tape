@@ -20,11 +20,12 @@ The five-second eligibility limit is measured at result generation, before settl
 
 ## Budgeted buyers: Python and TypeScript
 
-The new reference buyers work with **HTTP and MCP**. They check the recipient, Solana mainnet, USDC, exact scheme, resource, advertised product price and your budget before signing. A state file retains the original signed payment before transmission; timeouts reuse that payment. Neither client loads a wallet for unavailable or unchanged results.
+The reference buyers work with **HTTP and MCP**. They check the recipient, Solana mainnet, USDC, exact scheme, resource, advertised product price and your budget before signing. A state file retains the original signed payment before transmission; timeouts reuse that payment. Neither client loads a wallet for unavailable or unchanged results. Choose a language below and run its setup from the repository root.
 
 Python 3.12+ (Linux/macOS):
 
 ```bash
+cd examples/python
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-client.txt
 .venv/bin/python risk_client.py "$MINTS" --coverage
@@ -35,6 +36,7 @@ TAPE_PAYER_KEYPAIR=/absolute/path/to/payer.json .venv/bin/python risk_client.py 
 TypeScript, Node.js 24+:
 
 ```bash
+cd examples/typescript
 npm ci --ignore-scripts
 node risk_client.ts "$MINTS" --coverage --state buyer-state-ts.json
 TAPE_PAYER_KEYPAIR=/absolute/path/to/payer.json node risk_client.ts "$MINTS" --budget 0.05 --polls 20 --state buyer-state-ts.json
@@ -46,7 +48,7 @@ Keep each `buyer-state*.json` file private and use one active process per file. 
 
 Exact retries on the **same transport and original arguments** recover the original result and receipt for ten minutes. Replays carry `meta.replayed`, `meta.result_age_s` and aged freshness metadata; they do not contain newly measured data. The optional x402 payment identifier is supported, but an identifier alone cannot retrieve a result. Altering metadata or arguments on an already-used transaction returns a conflict. If you receive `payment_outcome_unknown` with `charged: null`, or the retry window has elapsed, reconcile the original transaction before authorizing another payment.
 
-The pinned Python installation avoids the SVM extra's conflicting Solana/solders constraints. The TypeScript lockfile pins compatible x402, Solana Kit and TypeScript versions. Offline checks: `.venv/bin/python -m unittest -q test_risk_client` and `npm run check && npm test`.
+Both examples include pinned dependency files for installation.
 
 ## What it is
 
@@ -77,13 +79,20 @@ Every paid response is self-describing: `schema_version`, `generated_at`, `cover
 
 ## Discovery for agents
 
-`/` (index), `/openapi.json` (x402scan-conformant, mirrored here), `/llms.txt` and `/llms-full.txt`, `/.well-known/x402` (manifest with accepts, input and output schemas per resource, mirrored here), `/v1/x402/resources` (per-resource accepts, examples, latency, freshness). Listed in the PayAI x402 catalog, on agent402.tools, and in the official MCP registry as `io.github.gosadu/loophole-tape`.
+Use the live documents for current capabilities, schemas and prices:
+
+- [API reference](https://api.loopholetape.com/docs) and [OpenAPI schema](https://api.loopholetape.com/openapi.json)
+- [Agent guide](https://api.loopholetape.com/llms.txt)
+- [x402 manifest](https://api.loopholetape.com/.well-known/x402) and [resource catalog](https://api.loopholetape.com/v1/x402/resources)
+
+MCP registry name: `io.github.gosadu/loophole-tape`. Connect to `https://api.loopholetape.com/mcp`.
 
 ## Pay from Python (reference client)
 
+For other routes, use the [generic HTTP buyer](examples/python/pay_client.py) from `examples/python` after the Python setup above:
+
 ```bash
-pip install -r requirements-client.txt
-TAPE_PAYER_KEYPAIR=~/.config/solana/payer.json python pay_client.py https://api.loopholetape.com "/v1/launches/recent?limit=5"
+TAPE_PAYER_KEYPAIR=~/.config/solana/payer.json .venv/bin/python pay_client.py https://api.loopholetape.com "/v1/launches/recent?limit=5"
 ```
 
 The reference clients register a payment guard: they sign only for this API's recipient, Solana mainnet and USDC, at or under the route's price (cap `TAPE_MAX_USD_PER_CALL`, default $0.03); anything else is refused. Any x402 v2 client works the same way: call the route, read the `PAYMENT-REQUIRED` header (the 402 body repeats it as JSON with a `how` field), sign the USDC transfer, retry with `PAYMENT-SIGNATURE`; the `PAYMENT-RESPONSE` header carries the settlement signature. TypeScript: `@x402/fetch` + `@x402/svm`. AgentKit's `discover_x402_services` finds the routes.
@@ -94,7 +103,7 @@ MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no traili
 
 Existing tools: `catalog`, `health`, `market_regime`, `sample_mint`, `rhc_regime` (free); `mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs`, `recent_graduations`, `creator_reputation`, `wallet_profile`, `rhc_curve_card` ($0.02), and `rhc_recent_launches` ($0.01).
 
-Paid tools first return an `isError` payment-required result. Retry with the signed payload in `_meta["x402/payment"]`; settlement returns in `_meta["x402/payment-response"]`. Invalid inputs and unavailable compact checks return structured errors without requesting payment. Use the new budgeted buyers with `--transport mcp`. The older generic `mcp_client.py` also works after `pip install -r requirements-client.txt "mcp<2"`.
+Paid tools first return an `isError` payment-required result. Retry with the signed payload in `_meta["x402/payment"]`; settlement returns in `_meta["x402/payment-response"]`. Invalid inputs and unavailable compact checks return structured errors without requesting payment. Use the budgeted buyers with `--transport mcp`. For other tools, use the [generic MCP buyer](examples/python/mcp_client.py); from `examples/python`, install its extra dependency with `.venv/bin/pip install "mcp<2"`.
 
 ## Terms, in one line
 

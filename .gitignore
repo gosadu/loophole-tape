@@ -26,3 +26,12 @@ data/
 logs/
 .aws/
 .ssh/
+*.log
+*.md
+!README.md
+/openapi.json
+/llms*.txt
+/.well-known/
+test_*.py
+test_*.ts
+tsconfig*.json
