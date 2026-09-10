@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.gosadu/loophole-tape",
-  "description": "Live pump.fun risk checks from our own on-chain capture: $0.005/mint or $0.01/5. Free coverage/watch. x402 USDC on Solana or Base, HTTP + MCP.",
+  "description": "Pump.fun risk checks: $0.005/mint or $0.01/5. Free coverage/watch. x402 USDC on Solana or Base. MCP",
   "repository": {
     "url": "https://github.com/gosadu/loophole-tape",
     "source": "github"
