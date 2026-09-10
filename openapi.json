@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "loophole tape",
-    "description": "Live pump.fun / PumpSwap analytics derived from public on-chain data. Pay per request in USDC on Solana through x402. See the documented routes for coverage and freshness.",
+    "description": "Live pump.fun / PumpSwap risk checks and Robinhood Chain Pons V2 analytics derived from public on-chain data. Pay per request in USDC on Solana through x402. Responses report coverage, freshness and observed evidence.",
     "version": "0.4.0",
     "x-guidance": "Machine-payable pump.fun intelligence. Call /v1/x402/resources or /llms.txt first. Paid GET routes return 402 with the x402 v2 PAYMENT-REQUIRED header (and the same JSON in the body); pay USDC on Solana mainnet (exact scheme, PayAI facilitator) and retry with PAYMENT-SIGNATURE. Every response is {ok, schema_version, generated_at, coverage: full|thin, data, meta{feed_lag_s, is_stale, next}}. Compact checks cost $0.005 for one mint or $0.01 total for up to five; full coverage and feed lag <= 5 s required. Free: /v1/check/coverage, /v1/check/watch, /v1/market/regime, /v1/sample/*, /health, /v1/labels. MCP at /mcp.",
     "contact": {
@@ -397,7 +397,7 @@
                           "creator prior: 3 launches, 0 graduations, 2 rugged"
                         ],
                         "history": null,
-                        "history_reason": "mint not in our launch history",
+                        "history_reason": "mint not in the available launch history",
                         "onchain": {
                           "slot": 445629740,
                           "exists": true,
@@ -1877,7 +1877,7 @@
             }
           }
         },
-        "description": "Recent Pons V2 launches on Robinhood Chain (chain 4663; default last hour, newest first) as compact structure cards computed from observed on-chain activity: raised (ETH), progress to the 4.2 ETH graduation, price multiple vs launch, snipe-tax activity, holder concentration (top-1 / top-5 / HHI), same-block direct-buy cluster share (matching timing, not proof of coordination), terminal-vs-direct route mix with the terminal router transactions joined to their wallets, inflow (new buyers in the last 2 / 6 s), lifecycle (live / complete / graduated). Filter pair=eth for ETH-paired curves, min_buys to skip dead launches.",
+        "description": "Recent Pons V2 launches on Robinhood Chain (chain 4663; default last hour, newest first) as compact structure cards: raised (ETH), progress to the 4.2 ETH graduation, price multiple vs launch, snipe-tax activity, holder concentration (top-1 / top-5 / HHI), same-block direct-buy cluster share (matching timing, not proof of coordination), terminal-vs-direct route mix with the terminal router transactions joined to their wallets, inflow (new buyers in the last 2 / 6 s), lifecycle (live / complete / graduated). Filter pair=eth for ETH-paired curves or min_buys for a minimum observed activity count.",
         "tags": [
           "paid"
         ],

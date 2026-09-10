@@ -1,5 +1,9 @@
 # Changelog
 
+## Documentation update — 2026-09-10
+
+- Refined API descriptions and examples across HTTP, MCP and the reference documentation.
+
 ## 0.4.0 — 2026-09-10
 
 - Added compact pump.fun observed-risk checks: $0.005 for one mint, $0.01 total for up to five caller-selected mints, through HTTP and MCP. Existing products and prices remain available.
