@@ -1,8 +1,8 @@
 # loophole tape — pump.fun risk checks from $0.005
 
 **Base URL:** `https://api.loopholetape.com`
-**Payment:** [x402](https://github.com/x402-foundation/x402) v2, scheme `exact`, network `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`, asset USDC, facilitator `https://facilitator.payai.network`. The facilitator pays the Solana network fee; a caller needs only USDC. No account or API key required.
-**Version:** 0.4.0 (schema 2.0)
+**Payment:** [x402](https://github.com/x402-foundation/x402) v2, scheme `exact`, USDC on **Solana mainnet** (`solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) **or Base** (`eip155:8453`), facilitator `https://facilitator.payai.network`. Every 402 lists both networks in `accepts[]`; pay whichever your wallet supports. The facilitator pays the network fee on either chain; a caller needs only USDC. No account or API key required.
+**Version:** 0.5.0 (schema 2.0)
 
 Check one mint for **$0.005**, or up to five caller-selected mints for **$0.01 total**. Get observed creator exits, early-wallet selling, drains, migration state, concentration and buyer flow in a compact JSON result. Use it before a swap or to monitor a position. Findings carry first-observed times and evidence; `no_flags_observed` means no documented flags were observed, not that a token is safe.
 
@@ -17,6 +17,10 @@ Check one mint for **$0.005**, or up to five caller-selected mints for **$0.01 t
 Only these events advance a watch cursor: `creator_sold`, `bundle_dumped`, `curve_drained`, `pool_drained`, `curve_closed_low`, `migrate_below_grad`, and curve completion/migration/graduation transitions. Ordinary trades, ages and changing totals do not. Cursors bind to the exact mint set and expire after 24 hours. Calling the free watch without a cursor initializes a baseline; omit the cursor from a paid check when you want the current measurements regardless of new events.
 
 The five-second eligibility limit is measured at result generation, before settlement. Settlement and network transit can add delay. `meta.freshness_checked_at` and `feed_lag_at_generation_s` record the eligibility check; `result_age_s`, `feed_lag_s` and `is_stale` are aged when the result is sent, including time spent settling. Compare `t` with your own clock after receipt; this is not a guarantee of delivery within five seconds.
+
+## Pay on Solana or Base
+
+The bundled example buyers pay with USDC on Solana. Any generic x402 v2 client with an EVM signer pays the same prices with USDC on Base: for example `@x402/fetch` with `@x402/evm` (viem account) or Python `x402[httpx,evm]`. Check `accepts[]` for the `eip155:8453` entry; its `payTo` and `asset` (native USDC) are fixed and published in `/.well-known/x402`.
 
 ## Budgeted buyers: Python and TypeScript
 
