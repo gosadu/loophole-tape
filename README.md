@@ -4,7 +4,7 @@
 **Payment:** [x402](https://github.com/x402-foundation/x402) v2, scheme `exact`, USDC on **Solana mainnet** (`solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) **or Base** (`eip155:8453`). Solana payments are settled by `https://facilitator.payai.network`, Base payments by Coinbase's facilitator `https://api.cdp.coinbase.com/platform/v2/x402`. Every 402 lists both networks in `accepts[]`; pay whichever your wallet supports. The facilitator pays the network fee on either chain; a caller needs only USDC. No account or API key required.
 **Version:** 0.5.0 (schema 2.0)
 
-Check one mint for **$0.005**, or up to five caller-selected mints for **$0.01 total**. Get observed creator exits, early-wallet selling, drains, migration state, concentration and buyer flow in a compact JSON result. Use it before a swap or to monitor a position. Findings carry first-observed times and evidence; `no_flags_observed` means no documented flags were observed, not that a token is safe.
+Check one mint for **$0.005**, or up to five caller-selected mints for **$0.01 total**. Every result carries **calibrated probabilities**, P(rug within 5 minutes) for checks younger than 30 seconds and P(true graduation) at any age, fitted on our own capture and validated out of time; the validation tables are public at `/v1/calibration`. Get observed creator exits, early-wallet selling, drains, migration state, concentration and buyer flow in a compact JSON result. Use it before a swap or to monitor a position. Findings carry first-observed times and evidence; `no_flags_observed` means no documented flags were observed, not that a token is safe.
 
 **Free coverage, free watch availability, no charge for unchanged watched events.** New paid checks require full live coverage for every mint and feed lag no greater than five seconds. Invalid, unavailable and stale checks are rejected before payment, with eligibility checked again after verification. The existing full card remains $0.025 and the existing free routes remain free.
 
@@ -68,6 +68,7 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 |---|---|---|
 | `GET /v1/check/mint/{mint}` | $0.005 | Compact observed-risk check for one fully covered pump.fun mint |
 | `GET /v1/check/watchlist?mints=...` | $0.01 total | Compact checks for up to five fully covered caller-selected mints |
+| `GET /v1/calibration` | free | Validation tables (Brier, calibration error, by-age) behind the probabilities |
 | `GET /v1/check/coverage?mints=...`, `GET /v1/check/watch?mints=...&cursor=...` | free | Coverage/prices and availability of new documented watch events |
 | `GET /v1/mint/{mint}` | $0.025 | Risk card for one pump.fun mint (live microstructure or thin on-chain card) |
 | `GET /v1/launches/recent` | $0.01 | Recent pump.fun launches with compact risk labels |
