@@ -83,7 +83,7 @@ Every paid response is self-describing: `schema_version`, `generated_at`, `cover
 
 ## Discovery for agents
 
-Agent directories can read the A2A agent card at `/.well-known/agent-card.json` (the `/a2a` JSON-RPC endpoint answers `message/send` with the catalog, payment terms and the exact call for a named skill or mint), the MCP server card at `/.well-known/mcp-server-card`, `agents.json` flows at `/.well-known/agents.json`, `agents.txt`, and the RFC 9727 catalog at `/.well-known/api-catalog`.
+An agent skill describing the whole paid workflow is served at `/skills/pumpfun-risk-check/SKILL.md` and published on Smithery as `loopholetape/pumpfun-risk-check`; the MCP server is listed as `loopholetape/loophole-tape`. Agent directories can read the A2A agent card at `/.well-known/agent-card.json` (the `/a2a` JSON-RPC endpoint answers `message/send` with the catalog, payment terms and the exact call for a named skill or mint), the MCP server card at `/.well-known/mcp-server-card`, `agents.json` flows at `/.well-known/agents.json`, `agents.txt`, and the RFC 9727 catalog at `/.well-known/api-catalog`.
 
 Use the live documents for current capabilities, schemas and prices:
 
