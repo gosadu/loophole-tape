@@ -1,7 +1,7 @@
 # loophole tape — pump.fun risk checks from $0.005
 
 **Base URL:** `https://api.loopholetape.com`
-**Payment:** [x402](https://github.com/x402-foundation/x402) v2, scheme `exact`, USDC on **Solana mainnet** (`solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) **or Base** (`eip155:8453`), facilitator `https://facilitator.payai.network`. Every 402 lists both networks in `accepts[]`; pay whichever your wallet supports. The facilitator pays the network fee on either chain; a caller needs only USDC. No account or API key required.
+**Payment:** [x402](https://github.com/x402-foundation/x402) v2, scheme `exact`, USDC on **Solana mainnet** (`solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) **or Base** (`eip155:8453`). Solana payments are settled by `https://facilitator.payai.network`, Base payments by Coinbase's facilitator `https://api.cdp.coinbase.com/platform/v2/x402`. Every 402 lists both networks in `accepts[]`; pay whichever your wallet supports. The facilitator pays the network fee on either chain; a caller needs only USDC. No account or API key required.
 **Version:** 0.5.0 (schema 2.0)
 
 Check one mint for **$0.005**, or up to five caller-selected mints for **$0.01 total**. Get observed creator exits, early-wallet selling, drains, migration state, concentration and buyer flow in a compact JSON result. Use it before a swap or to monitor a position. Findings carry first-observed times and evidence; `no_flags_observed` means no documented flags were observed, not that a token is safe.
