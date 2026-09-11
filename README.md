@@ -58,7 +58,7 @@ Both examples include pinned dependency files for installation.
 
 Live pump.fun / PumpSwap analytics derived from public on-chain data. Pay per request in USDC on Solana through x402. See the documented routes for coverage and freshness.
 
-Since v0.3.0 the same service also covers **Robinhood Chain (Pons V2 launchpad)**: launch feed and per-curve structure cards derived from public on-chain activity (raised/progress/price multiple, snipe-tax activity, holder concentration, same-block direct-buy cluster share, direct vs terminal route mix, new-buyer flow, lifecycle).
+Since v0.3.0 the same service also covers **Robinhood Chain (Pons V2 launchpad)**: launch feed and per-curve structure cards derived from public on-chain activity (exact reserves, raised/progress/price multiple, the launch's trade fee and creator tax in basis points, snipe-tax activity, holder concentration, same-block direct-buy cluster share, direct vs terminal route mix, new-buyer flow, lifecycle).
 
 Robinhood Chain two- and six-second flow counts expire against the response timestamp, even when no new trade arrives. Check `meta.is_stale` before interpreting zero activity; [field definitions](https://api.loopholetape.com/v1/labels) explain timestamp and coverage semantics.
 
