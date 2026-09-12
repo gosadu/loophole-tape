@@ -79,6 +79,7 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 | `GET /v1/keys/balance` | free | Status and remaining credit of a prepaid key (`X-API-Key` header) |
 | `GET /v1/datasets`, `/v1/datasets/sample/pumpfun_launches.csv`, `/v1/datasets/schema/pumpfun_launches` | free | Bulk datasets index, a 200-row sample and the column schema |
 | `GET /v1/datasets/pumpfun_launches/{day}` | $5.00 | One UTC day of pump.fun launches with outcomes and early features as a zstd parquet (about 15k-35k rows); the MCP tool `buy_dataset` returns a one-hour download URL instead |
+| `GET /v1/launches/since?since=&limit=` | $0.001 | Polling feed for bots: every covered launch created after the cursor, oldest first, with the calibrated probabilities and the check URL; returns `next_cursor` |
 | `GET /v1/check/coverage?mints=...`, `GET /v1/check/watch?mints=...&cursor=...` | free | Coverage/prices and availability of new documented watch events |
 | `GET /v1/mint/{mint}` | $0.025 | Risk card for one pump.fun mint (live microstructure or thin on-chain card) |
 | `GET /v1/launches/recent` | $0.01 | Recent pump.fun launches with compact risk labels |
@@ -118,7 +119,7 @@ The reference clients register a payment guard: they sign only for this API's re
 
 MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). **17 tools: seven free, ten paid.** New tools are `check_coverage` and `watchlist_updates` (free), `check_pumpfun_risk` ($0.005) and `check_watchlist_risk` ($0.01 total). MCP mint lists are JSON arrays; a single check takes `mint`. The new paid tools publish typed `outputSchema` and return the same data as HTTP.
 
-Existing tools: `catalog`, `health`, `market_regime`, `sample_mint`, `radar`, `rhc_regime` (free); `mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs`, `recent_graduations`, `creator_reputation`, `wallet_profile`, `rhc_curve_card` ($0.02), `buy_api_key` ($2.00 once, a prepaid key for HTTP), `buy_dataset` ($5.00 per day file), and `rhc_recent_launches` ($0.01).
+Existing tools: `catalog`, `health`, `market_regime`, `sample_mint`, `radar`, `rhc_regime` (free); `mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs`, `recent_graduations`, `creator_reputation`, `wallet_profile`, `rhc_curve_card` ($0.02), `buy_api_key` ($2.00 once, a prepaid key for HTTP), `buy_dataset` ($5.00 per day file), `launches_since` ($0.001 per poll), and `rhc_recent_launches` ($0.01).
 
 Paid tools first return an `isError` payment-required result. Retry with the signed payload in `_meta["x402/payment"]`; settlement returns in `_meta["x402/payment-response"]`. Invalid inputs and unavailable compact checks return structured errors without requesting payment. Use the budgeted buyers with `--transport mcp`. For other tools, use the [generic MCP buyer](examples/python/mcp_client.py); from `examples/python`, install its extra dependency with `.venv/bin/pip install "mcp<2"`.
 
