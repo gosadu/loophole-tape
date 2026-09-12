@@ -80,6 +80,7 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 | `GET /v1/datasets`, `/v1/datasets/sample/pumpfun_launches.csv`, `/v1/datasets/schema/pumpfun_launches` | free | Bulk datasets index, a 200-row sample and the column schema |
 | `GET /v1/datasets/pumpfun_launches/{day}` | $5.00 | One UTC day of pump.fun launches with outcomes and early features as a zstd parquet (about 15k-35k rows); the MCP tool `buy_dataset` returns a one-hour download URL instead |
 | `GET /v1/launches/since?since=&limit=` | $0.001 | Polling feed for bots: every covered launch created after the cursor, oldest first, with the calibrated probabilities and the check URL; returns `next_cursor` |
+| `GET /v1/track-record`, page `/track-record` | free | Daily scorecard of the radar's own calls against outcomes: rug flags rugged within 300 s, graduation flags graduated, base rates |
 | `GET /v1/check/coverage?mints=...`, `GET /v1/check/watch?mints=...&cursor=...` | free | Coverage/prices and availability of new documented watch events |
 | `GET /v1/mint/{mint}` | $0.025 | Risk card for one pump.fun mint (live microstructure or thin on-chain card) |
 | `GET /v1/launches/recent` | $0.01 | Recent pump.fun launches with compact risk labels |
