@@ -6,7 +6,7 @@
 
 Check one mint for **$0.005**, or up to five caller-selected mints for **$0.01 total**. Every result carries **calibrated probabilities**, P(rug within 5 minutes) for checks younger than 30 seconds and P(true graduation) at any age, fitted on our own capture and validated out of time; the validation tables are public at `/v1/calibration`. Get observed creator exits, early-wallet selling, drains, migration state, concentration and buyer flow in a compact JSON result. Use it before a swap or to monitor a position. Findings carry first-observed times and evidence; `no_flags_observed` means no documented flags were observed, not that a token is safe.
 
-**Free coverage, free watch availability, no charge for unchanged watched events.** New paid checks require full live coverage for every mint and feed lag no greater than five seconds. Invalid, unavailable and stale checks are rejected before payment, with eligibility checked again after verification. The existing full card remains $0.025 and the existing free routes remain free.
+**Free coverage, free watch availability, no charge for unchanged watched events.** New paid checks require full live coverage for every mint and feed lag no greater than five seconds. An unpaid request with well-formed mints returns the ordinary 402 quote; when the payment (or prepaid key) arrives, uncovered mints are refused unpaid before verification with `live_examples` (mints covered right now) and the free `/v1/radar` to pick from, and eligibility is checked again after verification. Stale feeds and malformed mints are refused before payment. The existing full card remains $0.025 and the existing free routes remain free.
 
 ## Start here
 
