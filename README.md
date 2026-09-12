@@ -28,6 +28,8 @@ The bundled example buyers pay with USDC on Solana. Any generic x402 v2 client w
 
 ## Budgeted buyers: Python and TypeScript
 
+**Whole agent loop in one file:** `examples/python/agent_loop.py` buys a $2 prepaid key once with x402, then polls `GET /v1/launches/since` every 30 s and buys a compact check for every launch whose calibrated P(true graduation) clears a threshold, all with a plain `X-API-Key` header. `TAPE_PAYER_KEYPAIR=~/.config/solana/payer.json python examples/python/agent_loop.py --every 30 --grad-min 0.3 --check-max 20`
+
 The reference buyers work with **HTTP and MCP**. They check the recipient, Solana mainnet, USDC, exact scheme, resource, advertised product price and your budget before signing. A state file retains the original signed payment before transmission; timeouts reuse that payment. Neither client loads a wallet for unavailable or unchanged results. Choose a language below and run its setup from the repository root.
 
 Python 3.12+ (Linux/macOS):
