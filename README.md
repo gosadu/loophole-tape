@@ -20,6 +20,8 @@ The five-second eligibility limit is measured at result generation, before settl
 
 ## Pay on Solana or Base
 
+**In a browser, no client needed:** open any paid URL (for example a mint from the free [radar](https://api.loopholetape.com/radar)) in a browser with a Solana wallet such as Phantom or Solflare; the page asks the wallet to pay the exact amount and then shows the result. Agents get the JSON 402 with the `PAYMENT-REQUIRED` header instead.
+
 The bundled example buyers pay with USDC on Solana. Any generic x402 v2 client with an EVM signer pays the same prices with USDC on Base: for example `@x402/fetch` with `@x402/evm` (viem account) or Python `x402[httpx,evm]`. Check `accepts[]` for the `eip155:8453` entry; its `payTo` and `asset` (native USDC) are fixed and published in `/.well-known/x402`.
 
 ## Budgeted buyers: Python and TypeScript
