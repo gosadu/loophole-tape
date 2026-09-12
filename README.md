@@ -72,6 +72,7 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 | `GET /v1/check/watchlist?mints=...` | $0.01 total | Compact checks for up to five fully covered caller-selected mints |
 | `GET /v1/calibration` | free | Validation tables (Brier, calibration error, by-age) behind the probabilities |
 | `GET /v1/radar`, page `/radar` | free | Live radar: the ten covered mints under 30 s with the highest calibrated rug-within-300s probability and the ten under 15 min with the highest true-graduation probability, each with the paid check URL; refreshed every 5 s |
+| `GET /v1/rhc/sample/launches`, page `/rhc` | free | Robinhood Chain (Pons V2): five launch cards delayed 5 minutes in the exact paid shape, and a page with the live regime meter (launches/h, graduation rate, creator-tax split) |
 | `GET /v1/check/coverage?mints=...`, `GET /v1/check/watch?mints=...&cursor=...` | free | Coverage/prices and availability of new documented watch events |
 | `GET /v1/mint/{mint}` | $0.025 | Risk card for one pump.fun mint (live microstructure or thin on-chain card) |
 | `GET /v1/launches/recent` | $0.01 | Recent pump.fun launches with compact risk labels |
