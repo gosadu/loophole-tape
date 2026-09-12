@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.gosadu/loophole-tape",
-  "description": "pump.fun and Robinhood Chain launch data: free live radar, risk checks from $0.005, launches delta feed $0.001, daily datasets, prepaid keys; x402 USDC on Solana or Base; 22 tools",
+  "description": "pump.fun & Robinhood Chain launch data: radar, risk checks, delta feed, datasets, keys. x402 USDC",
   "repository": {
     "url": "https://github.com/gosadu/loophole-tape",
     "source": "github"
