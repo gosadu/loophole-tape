@@ -69,6 +69,7 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 | `GET /v1/check/mint/{mint}` | $0.005 | Compact observed-risk check for one fully covered pump.fun mint |
 | `GET /v1/check/watchlist?mints=...` | $0.01 total | Compact checks for up to five fully covered caller-selected mints |
 | `GET /v1/calibration` | free | Validation tables (Brier, calibration error, by-age) behind the probabilities |
+| `GET /v1/radar`, page `/radar` | free | Live radar: the ten covered mints under 30 s with the highest calibrated rug-within-300s probability and the ten under 15 min with the highest true-graduation probability, each with the paid check URL; refreshed every 5 s |
 | `GET /v1/check/coverage?mints=...`, `GET /v1/check/watch?mints=...&cursor=...` | free | Coverage/prices and availability of new documented watch events |
 | `GET /v1/mint/{mint}` | $0.025 | Risk card for one pump.fun mint (live microstructure or thin on-chain card) |
 | `GET /v1/launches/recent` | $0.01 | Recent pump.fun launches with compact risk labels |
@@ -108,7 +109,7 @@ The reference clients register a payment guard: they sign only for this API's re
 
 MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). **17 tools: seven free, ten paid.** New tools are `check_coverage` and `watchlist_updates` (free), `check_pumpfun_risk` ($0.005) and `check_watchlist_risk` ($0.01 total). MCP mint lists are JSON arrays; a single check takes `mint`. The new paid tools publish typed `outputSchema` and return the same data as HTTP.
 
-Existing tools: `catalog`, `health`, `market_regime`, `sample_mint`, `rhc_regime` (free); `mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs`, `recent_graduations`, `creator_reputation`, `wallet_profile`, `rhc_curve_card` ($0.02), and `rhc_recent_launches` ($0.01).
+Existing tools: `catalog`, `health`, `market_regime`, `sample_mint`, `radar`, `rhc_regime` (free); `mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs`, `recent_graduations`, `creator_reputation`, `wallet_profile`, `rhc_curve_card` ($0.02), and `rhc_recent_launches` ($0.01).
 
 Paid tools first return an `isError` payment-required result. Retry with the signed payload in `_meta["x402/payment"]`; settlement returns in `_meta["x402/payment-response"]`. Invalid inputs and unavailable compact checks return structured errors without requesting payment. Use the budgeted buyers with `--transport mcp`. For other tools, use the [generic MCP buyer](examples/python/mcp_client.py); from `examples/python`, install its extra dependency with `.venv/bin/pip install "mcp<2"`.
 
