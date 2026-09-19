@@ -76,7 +76,7 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 | `GET /v1/check/watchlist?mints=...` | $0.01 total | Compact checks for up to five fully covered caller-selected mints |
 | `GET /v1/calibration` | free | Validation tables (Brier, calibration error, by-age) behind the probabilities |
 | `GET /v1/radar`, page `/radar` | free | Live radar: the ten covered mints under 30 s with the highest calibrated rug-within-300s probability and the ten under 15 min with the highest true-graduation probability, each with the paid check URL; refreshed every 5 s |
-| `GET /v1/rhc/sample/launches`, page `/rhc` | free | Robinhood Chain (Pons V2): five launch cards delayed 5 minutes in the exact paid shape, and a page with the live regime meter (launches/h, graduation rate, creator-tax split) |
+| `GET /v1/rhc/sample/launches`, page `/rhc` | free | Robinhood Chain (Pons V2): five launch cards delayed 5 minutes in the exact paid shape, each with its `ring` block and the ring rule, and a page with the live regime meter (launches/h, graduation rate, creator-tax split) |
 | `GET /v1/keys/new` | $2.00 | Buy a prepaid key: $2.00 of credit spent by sending `X-API-Key` on any paid HTTP route (activated by the same request's settlement) |
 | `GET /v1/keys/trial` | $0.10 | The same prepaid key with $0.10 of credit (about twenty checks) for trying the header path with a small budget |
 | `GET /v1/keys/balance` | free | Status and remaining credit of a prepaid key (`X-API-Key` header) |
@@ -91,7 +91,7 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 | `GET /v1/graduations/recent` | $0.02 | Recent migrations labelled true graduation vs below-threshold close |
 | `GET /v1/creator/{address}` | $0.02 | Creator reputation over our full launch history |
 | `GET /v1/wallet/{address}` | $0.02 | Wallet class from our rolling PnL leaderboard + live holdings |
-| `GET /v1/rhc/launches/recent` | $0.01 | Robinhood Chain (Pons V2) recent launches with holder / route / cluster structure |
+| `GET /v1/rhc/launches/recent` | $0.01 | Robinhood Chain (Pons V2) recent launches with holder / route / cluster structure, and the ring screen: `ring_only=true` returns only curves matching the coordinated-cluster shape (8+ buyers, same-block direct-buy cluster share ≥ 0.5) with the rule and its measured base rates beside the items |
 | `GET /v1/rhc/curve/{address}` | $0.02 | Robinhood Chain (Pons V2) curve structure card for one curve or token address |
 | `/`, `/health`, `/v1/market/regime`, `/v1/sample/launches`, `/v1/sample/rugs`, `/v1/sample/mint`, `/v1/x402/resources`, `/v1/labels`, `/v1/rhc/regime`, `/.well-known/x402`, `/openapi.json`, `/llms.txt`, `/mcp`, `/terms`, `/.well-known/agent-card.json`, `/a2a`, `/.well-known/mcp-server-card`, `/.well-known/agents.json`, `/agents.txt`, `/.well-known/api-catalog` | free | index, health, regime meters, delayed samples, discovery documents, labels, MCP, terms |
 
