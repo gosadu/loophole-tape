@@ -97,6 +97,8 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 
 `GET /about` (aliases `/about.json`, `/team`, `/contact`) answers who sells this: the project identity and its role mailbox, this repository, the signed proof of control of both payment addresses (check each signature against `accepts[].payTo` in any 402 challenge), where the data comes from, and the plain fact that there is no token, presale or fundraising. HTML for browsers, the same record as JSON for agents.
 
+The same identity resolves as a DID: `did:web:api.loopholetape.com`, document at `GET /.well-known/did.json`. Both payout accounts appear as CAIP-10 `blockchainAccountId` verification methods (`solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp:...` and `eip155:8453:0x...`), and the signatures that bind them to the origin are in the document's extension block, so a directory can verify the seller rather than trust it.
+
 Every paid response is self-describing: `schema_version`, `generated_at`, `coverage`, and `meta` with freshness, source and related resources. The full `/v1/mint/{mint}` card supports both full live coverage and thin history/on-chain coverage. New compact checks require full coverage; an unavailable mint makes the entire requested batch unpaid. Label semantics: `/v1/labels`. Seven-day base rates are included in the existing full card.
 
 ## Discovery for agents
