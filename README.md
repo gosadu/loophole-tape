@@ -2,7 +2,7 @@
 
 **Base URL:** `https://api.loopholetape.com`
 **Payment:** [x402](https://github.com/x402-foundation/x402) v2, scheme `exact`, USDC on **Solana mainnet** (`solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) **or Base** (`eip155:8453`). Solana payments are settled by `https://facilitator.payai.network`, Base payments by Coinbase's facilitator `https://api.cdp.coinbase.com/platform/v2/x402`. Every 402 lists both networks in `accepts[]`; pay whichever your wallet supports. The facilitator pays the network fee on either chain; a caller needs only USDC. No account or API key required.
-**Version:** 0.5.0 (schema 2.0)
+**Version:** 0.6.1 (schema 2.0)
 
 Check one mint for **$0.005**, or up to five caller-selected mints for **$0.01 total**. Every result carries **calibrated probabilities**, P(rug within 5 minutes) for checks younger than 30 seconds and P(true graduation) at any age, fitted on our own capture and validated out of time; the validation tables are public at `/v1/calibration`. Get observed creator exits, early-wallet selling, drains, migration state, concentration and buyer flow in a compact JSON result. Use it before a swap or to monitor a position. Findings carry first-observed times and evidence; `no_flags_observed` means no documented flags were observed, not that a token is safe.
 
@@ -127,7 +127,7 @@ The reference clients register a payment guard: they sign only for this API's re
 
 ## MCP (for agents that call tools)
 
-MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). **17 tools: seven free, ten paid.** New tools are `check_coverage` and `watchlist_updates` (free), `check_pumpfun_risk` ($0.005) and `check_watchlist_risk` ($0.01 total). MCP mint lists are JSON arrays; a single check takes `mint`. The new paid tools publish typed `outputSchema` and return the same data as HTTP.
+MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). **22 tools: eight free, fourteen paid.** The compact-check tools are `check_coverage` and `watchlist_updates` (free), `check_pumpfun_risk` ($0.005) and `check_watchlist_risk` ($0.01 total). MCP mint lists are JSON arrays; a single check takes `mint`. The new paid tools publish typed `outputSchema` and return the same data as HTTP.
 
 Existing tools: `catalog`, `health`, `market_regime`, `sample_mint`, `radar`, `rhc_regime` (free); `mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs`, `recent_graduations`, `creator_reputation`, `wallet_profile`, `rhc_curve_card` ($0.02), `buy_api_key` ($2.00 once, a prepaid key for HTTP), `buy_trial_key` ($0.10), `buy_dataset` ($5.00 per day file), `launches_since` ($0.001 per poll), and `rhc_recent_launches` ($0.01).
 
