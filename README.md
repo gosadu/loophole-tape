@@ -18,11 +18,11 @@ Only these events advance a watch cursor: `creator_sold`, `bundle_dumped`, `curv
 
 The five-second eligibility limit is measured at result generation, before settlement. Settlement and network transit can add delay. `meta.freshness_checked_at` and `feed_lag_at_generation_s` record the eligibility check; `result_age_s`, `feed_lag_s` and `is_stale` are aged when the result is sent, including time spent settling. Compare `t` with your own clock after receipt; this is not a guarantee of delivery within five seconds.
 
-## Pay on Solana, Base or Robinhood Chain
+## Pay on Solana, Base, Robinhood Chain or X Layer
 
-Every paid route offers three x402 `accepts` entries: USDC on Solana mainnet (PayAI facilitator), USDC on Base `eip155:8453` (Coinbase CDP facilitator) and, since 2026-09-23, USDG on Robinhood Chain `eip155:4663` (facilitator.naven.network; USDG is not a default asset in the x402 SDKs, so allow it in your client's spend controls and pick that entry).
+Every paid route offers four x402 `accepts` entries: USDC on Solana mainnet and USDC on Base `eip155:8453` (both settled by the Coinbase CDP facilitator since 2026-09-23), USDG on Robinhood Chain `eip155:4663` (facilitator.naven.network) and USD₮0 on X Layer `eip155:196` (PayAI facilitator). USDG and USD₮0 are not default assets in the x402 SDKs, so allow them in your client's spend controls if you want those entries. Clients that pay the first entry can reorder the quote with `?rail=solana|base|usdg|xlayer` (or the `X-Rail` header); the order is Solana, Base, USDG, USD₮0 by default.
 
-**In a browser, no client needed:** open any paid URL (for example a mint from the free [radar](https://api.loopholetape.com/radar)) in a browser with a Solana wallet such as Phantom or Solflare; the page asks the wallet to pay the exact amount and then shows the result. Agents get the JSON 402 with the `PAYMENT-REQUIRED` header instead.
+**In a browser, no client needed:** open any paid URL (for example a mint from the free [radar](https://api.loopholetape.com/radar)) in a browser with a Solana wallet such as Phantom or Solflare; the page asks the wallet to pay the exact amount and then shows the result. With an EVM wallet (Coinbase Wallet, MetaMask) add `?rail=base` to the URL. Agents get the JSON 402 with the `PAYMENT-REQUIRED` header instead.
 
 **Prepaid key, no client after one payment:** `GET https://api.loopholetape.com/v1/keys/new` costs $2.00 once (x402 by header, or in a browser with a wallet) and returns a key `lt_...` holding $2.00 of credit. Then send `X-API-Key: lt_...` on any paid HTTP route and the route's price is deducted; `GET /v1/keys/balance` with the header is free. Credit does not expire; the key is a bearer secret. The same header on `POST /mcp` pays the MCP tools: set `X-API-Key: lt_...` in your MCP client's config for this server (clients that cannot sign x402 can still send a static header).
 
@@ -76,8 +76,12 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 |---|---|---|
 | `GET /v1/check/mint/{mint}` | $0.005 | Compact observed-risk check for one fully covered pump.fun mint |
 | `GET /v1/check/watchlist?mints=...` | $0.01 total | Compact checks for up to five fully covered caller-selected mints |
+| `GET /v1/check/batch?mints=...` | $0.04 total | Compact checks for up to 25 mints in one call (uncovered mints reported per item) |
+| `GET /v1/launches/screened?limit=` | $0.01 | The newest covered pump.fun launches without an `avoid` verdict, ranked by calibrated true-graduation odds, each with its verdict word and reasons |
+| `GET /v1/mint/{mint}/holders?limit=` | $0.01 | Current holder table of one covered mint: shares, first buys, observed labels (creator, create-slot buyers, leaderboard classes), concentration summary |
+| `GET /v1/mint/{mint}/flow?since=&limit=` | $0.01 a page | Every bonding-curve buy and sell of one covered mint in slot order with running net SOL, 60 s / 5 min summaries and a cursor |
 | `GET /v1/verdict/{mint}` | $0.01 | One word (avoid / caution / no_flags_observed) by a fixed public rule, the calibrated odds, up to three observed reasons, and a free shareable card page (`/verdict/{token}`, HMAC-signed) |
-| `GET /v1/calibration` | free | Validation tables (Brier, calibration error, by-age) behind the probabilities |
+| `GET /v1/calibration` | free | Validation tables behind the probabilities, plus the `production` block: the rug number is recalibrated on the radar's own live calls (before/after tables; it is withdrawn if live calibration error exceeds 0.05) |
 | `GET /v1/radar`, page `/radar` | free | Live radar: the ten covered mints under 30 s with the highest calibrated rug-within-300s probability and the ten under 15 min with the highest true-graduation probability, each with the paid check URL; refreshed every 5 s |
 | `GET /v1/rhc/sample/launches`, page `/rhc` | free | Robinhood Chain (Pons V2): five launch cards delayed 5 minutes in the exact paid shape, each with its `ring` block and the ring rule, and a page with the live regime meter (launches/h, graduation rate, creator-tax split) |
 | `GET /v1/keys/new` | $2.00 | Buy a prepaid key: $2.00 of credit spent by sending `X-API-Key` on any paid HTTP route (activated by the same request's settlement) |
@@ -85,7 +89,9 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 | `GET /v1/keys/balance` | free | Status and remaining credit of a prepaid key (`X-API-Key` header) |
 | `GET /v1/datasets`, `/v1/datasets/sample/pumpfun_launches.csv`, `/v1/datasets/schema/pumpfun_launches` | free | Bulk datasets index, a 200-row sample and the column schema |
 | `GET /v1/datasets/pumpfun_launches/{day}` | $5.00 | One UTC day of pump.fun launches with outcomes and early features as a zstd parquet (about 15k-35k rows); the MCP tool `buy_dataset` returns a one-hour download URL instead |
-| `GET /v1/launches/since?since=&limit=` | $0.001 | Polling feed for bots: every covered launch created after the cursor, oldest first, with the calibrated probabilities and the check URL; returns `next_cursor` |
+| `GET /v1/launches/since?since=&limit=` | $0.001 | Polling feed for bots: every covered launch created after the cursor, oldest first, with its verdict word, the calibrated probabilities and the check URL; filters `no_avoid=1` and `min_p_grad=`; returns `next_cursor` |
+| `/stats/pumpfun`, `/stats/pons` (JSON at `/v1/stats/*`) | free | Daily launch statistics from our own capture: true graduation rate, the instant-bundle share of graduations, organic rate, ticker-copy counts; Robinhood Chain launches, graduations, creator-tax and stock-token-quote shares |
+| `GET /go/{venue}/{mint}` | free | Plain redirects to pump.fun, DexScreener, Jupiter, GMGN, Axiom or Photon for a mint (no referral code, no fee) |
 | `GET /v1/track-record`, page `/track-record` | free | Daily scorecard of the radar's own calls against outcomes: rug flags rugged within 300 s, graduation flags graduated, base rates |
 | `GET /v1/check/coverage?mints=...`, `GET /v1/check/watch?mints=...&cursor=...` | free | Coverage/prices and availability of new documented watch events |
 | `GET /v1/mint/{mint}` | $0.025 | Risk card for one pump.fun mint (live microstructure or thin on-chain card) |
@@ -95,6 +101,7 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 | `GET /v1/creator/{address}` | $0.02 | Creator reputation over our full launch history |
 | `GET /v1/wallet/{address}` | $0.02 | Wallet class from our rolling PnL leaderboard + live holdings |
 | `GET /v1/rhc/launches/recent` | $0.01 | Robinhood Chain (Pons V2) recent launches with holder / route / cluster structure, and the ring screen: `ring_only=true` returns only curves matching the coordinated-cluster shape (8+ buyers, same-block direct-buy cluster share ≥ 0.5) with the rule and its measured base rates beside the items |
+| `GET /v1/rhc/curve/{address}/trades?since=&limit=` | $0.02 a page | Robinhood Chain (Pons V2): every buy, sell and fee-sweep buyback of one curve with the reserves after it (rebuilt to the wei with the exact four-word curve model), marginal price, fee, snipe tax and creator tax; free 5-minute-delayed sample at `GET /v1/rhc/sample/trades?address=` |
 | `GET /v1/rhc/curve/{address}` | $0.02 | Robinhood Chain (Pons V2) curve structure card for one curve or token address, with a `trade_cost` block: for a 0.01 and a 0.05 ETH clip at the reserves now, the fill over the marginal price, the immediate round trip and the price rise needed to break even, through the exact constant product with the 1% fee and the launch's creator tax on both legs (null with a reason on non-ETH pairs, finished curves or inside the snipe window) |
 | `/`, `/health`, `/v1/market/regime`, `/v1/sample/launches`, `/v1/sample/rugs`, `/v1/sample/mint`, `/v1/x402/resources`, `/v1/labels`, `/v1/rhc/regime`, `/pricing`, `/about`, `/transparency`, `/.well-known/x402`, `/openapi.json`, `/llms.txt`, `/mcp`, `/terms`, `/.well-known/agent-card.json`, `/a2a`, `/.well-known/mcp-server-card`, `/.well-known/agents.json`, `/agents.txt`, `/.well-known/api-catalog` | free | index, health, regime meters, delayed samples, discovery documents, labels, MCP, prices, seller identity, settlement record, terms |
 
@@ -128,9 +135,11 @@ TAPE_PAYER_KEYPAIR=~/.config/solana/payer.json .venv/bin/python pay_client.py ht
 
 The reference clients register a payment guard: they sign only for this API's recipient, Solana mainnet and USDC, at or under the route's price (cap `TAPE_MAX_USD_PER_CALL`, default $0.03); anything else is refused. Any x402 v2 client works the same way: call the route, read the `PAYMENT-REQUIRED` header (the 402 body repeats it as JSON with a `how` field), sign the USDC transfer, retry with `PAYMENT-SIGNATURE`; the `PAYMENT-RESPONSE` header carries the settlement signature. TypeScript: `@x402/fetch` + `@x402/svm`. AgentKit's `discover_x402_services` finds the routes.
 
+Routers that cannot fill a path template can use the query form of the per-id routes (`/v1/verdict?mint=`, `/v1/check/mint?mint=`, `/v1/mint?mint=`, `/v1/creator?address=`, `/v1/wallet?address=`, `/v1/rhc/curve?address=`): quoted and served for the id named, at the path form's price; the bare form without an id answers a 402 that names the required parameter and refuses a payment without one.
+
 ## MCP (for agents that call tools)
 
-MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). **23 tools: eight free, fifteen paid** (the `verdict` tool, $0.01, returns the verdict object with its share link). The compact-check tools are `check_coverage` and `watchlist_updates` (free), `check_pumpfun_risk` ($0.005) and `check_watchlist_risk` ($0.01 total). MCP mint lists are JSON arrays; a single check takes `mint`. The new paid tools publish typed `outputSchema` and return the same data as HTTP.
+MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). **28 tools: eight free, twenty paid** (tools that declare an `outputSchema` publish `anyOf[success, x402 PaymentRequired, refusal]`, so both the TypeScript and Python x402 clients pay them) (the `verdict` tool, $0.01, returns the verdict object with its share link). The compact-check tools are `check_coverage` and `watchlist_updates` (free), `check_pumpfun_risk` ($0.005) and `check_watchlist_risk` ($0.01 total). MCP mint lists are JSON arrays; a single check takes `mint`. The new paid tools publish typed `outputSchema` and return the same data as HTTP.
 
 Existing tools: `catalog`, `health`, `market_regime`, `sample_mint`, `radar`, `rhc_regime` (free); `mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs`, `recent_graduations`, `creator_reputation`, `wallet_profile`, `rhc_curve_card` ($0.02), `buy_api_key` ($2.00 once, a prepaid key for the HTTP routes and these tools), `buy_trial_key` ($0.10), `buy_dataset` ($5.00 per day file), `launches_since` ($0.001 per poll), and `rhc_recent_launches` ($0.01).
 
