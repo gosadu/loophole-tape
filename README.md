@@ -18,7 +18,9 @@ Only these events advance a watch cursor: `creator_sold`, `bundle_dumped`, `curv
 
 The five-second eligibility limit is measured at result generation, before settlement. Settlement and network transit can add delay. `meta.freshness_checked_at` and `feed_lag_at_generation_s` record the eligibility check; `result_age_s`, `feed_lag_s` and `is_stale` are aged when the result is sent, including time spent settling. Compare `t` with your own clock after receipt; this is not a guarantee of delivery within five seconds.
 
-## Pay on Solana or Base
+## Pay on Solana, Base or Robinhood Chain
+
+Every paid route offers three x402 `accepts` entries: USDC on Solana mainnet (PayAI facilitator), USDC on Base `eip155:8453` (Coinbase CDP facilitator) and, since 2026-09-23, USDG on Robinhood Chain `eip155:4663` (facilitator.naven.network; USDG is not a default asset in the x402 SDKs, so allow it in your client's spend controls and pick that entry).
 
 **In a browser, no client needed:** open any paid URL (for example a mint from the free [radar](https://api.loopholetape.com/radar)) in a browser with a Solana wallet such as Phantom or Solflare; the page asks the wallet to pay the exact amount and then shows the result. Agents get the JSON 402 with the `PAYMENT-REQUIRED` header instead.
 
@@ -74,6 +76,7 @@ Robinhood Chain two- and six-second flow counts expire against the response time
 |---|---|---|
 | `GET /v1/check/mint/{mint}` | $0.005 | Compact observed-risk check for one fully covered pump.fun mint |
 | `GET /v1/check/watchlist?mints=...` | $0.01 total | Compact checks for up to five fully covered caller-selected mints |
+| `GET /v1/verdict/{mint}` | $0.01 | One word (avoid / caution / no_flags_observed) by a fixed public rule, the calibrated odds, up to three observed reasons, and a free shareable card page (`/verdict/{token}`, HMAC-signed) |
 | `GET /v1/calibration` | free | Validation tables (Brier, calibration error, by-age) behind the probabilities |
 | `GET /v1/radar`, page `/radar` | free | Live radar: the ten covered mints under 30 s with the highest calibrated rug-within-300s probability and the ten under 15 min with the highest true-graduation probability, each with the paid check URL; refreshed every 5 s |
 | `GET /v1/rhc/sample/launches`, page `/rhc` | free | Robinhood Chain (Pons V2): five launch cards delayed 5 minutes in the exact paid shape, each with its `ring` block and the ring rule, and a page with the live regime meter (launches/h, graduation rate, creator-tax split) |
@@ -127,7 +130,7 @@ The reference clients register a payment guard: they sign only for this API's re
 
 ## MCP (for agents that call tools)
 
-MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). **22 tools: eight free, fourteen paid.** The compact-check tools are `check_coverage` and `watchlist_updates` (free), `check_pumpfun_risk` ($0.005) and `check_watchlist_risk` ($0.01 total). MCP mint lists are JSON arrays; a single check takes `mint`. The new paid tools publish typed `outputSchema` and return the same data as HTTP.
+MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). **23 tools: eight free, fifteen paid** (the `verdict` tool, $0.01, returns the verdict object with its share link). The compact-check tools are `check_coverage` and `watchlist_updates` (free), `check_pumpfun_risk` ($0.005) and `check_watchlist_risk` ($0.01 total). MCP mint lists are JSON arrays; a single check takes `mint`. The new paid tools publish typed `outputSchema` and return the same data as HTTP.
 
 Existing tools: `catalog`, `health`, `market_regime`, `sample_mint`, `radar`, `rhc_regime` (free); `mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs`, `recent_graduations`, `creator_reputation`, `wallet_profile`, `rhc_curve_card` ($0.02), `buy_api_key` ($2.00 once, a prepaid key for the HTTP routes and these tools), `buy_trial_key` ($0.10), `buy_dataset` ($5.00 per day file), `launches_since` ($0.001 per poll), and `rhc_recent_launches` ($0.01).
 
