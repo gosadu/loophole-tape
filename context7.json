@@ -1,0 +1,18 @@
+{
+  "$schema": "https://context7.com/schema/context7.json",
+  "projectTitle": "Loophole Tape",
+  "description": "x402 pay-per-call API and MCP server: calibrated pump.fun launch-risk checks (P(rug within 5 min), P(true graduation)) and Robinhood Chain Pons V2 launch-curve data.",
+  "folders": [],
+  "excludeFolders": ["node_modules", ".venv"],
+  "excludeFiles": ["LICENSE", "package-lock.json"],
+  "rules": [
+    "Base URL is https://api.loopholetape.com. Paid routes answer HTTP 402 with x402 v2 'exact' requirements (USDC on Solana or Base, USDG on Robinhood Chain); pay with an x402 v2 client and retry with PAYMENT-SIGNATURE. No account needed.",
+    "Call the free GET /v1/check/coverage?mints=... before paying. Paid checks refuse uncovered mints and stale feeds without charging, so do not answer such a refusal with a new payment.",
+    "no_flags_observed means no documented flag was observed, not that a token is safe. The probabilities are calibrated estimates (validation tables at /v1/calibration), not guarantees and not financial advice.",
+    "P(rug within 5 minutes) is published only for mints younger than 30 seconds; P(true graduation) at any age. Check meta.is_stale and meta.feed_lag_s before acting on a result.",
+    "Before signing, check payTo, network and asset against /.well-known/x402 and enforce a per-call and total spend cap in the client; the Python and TypeScript examples in this repo do this for USDC on Solana.",
+    "Without an x402 client: buy a prepaid key once (GET /v1/keys/trial $0.10 or /v1/keys/new $2.00), then send the header X-API-Key: lt_... on paid HTTP routes and on POST /mcp. Treat the key as a secret.",
+    "MCP is streamable HTTP at https://api.loopholetape.com/mcp; initialize and tools/list need no payment. A paid tool without payment returns the requirements; retry with the signed payload in _meta[\"x402/payment\"].",
+    "To monitor mints, poll the free GET /v1/check/watch no faster than every 15 s and buy a paid check with its cursor only when data.has_new_events is true; an unchanged cursor is answered unpaid."
+  ]
+}
