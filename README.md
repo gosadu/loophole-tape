@@ -18,6 +18,12 @@ Only these events advance a watch cursor: `creator_sold`, `bundle_dumped`, `curv
 
 The five-second eligibility limit is measured at result generation, before settlement. Settlement and network transit can add delay. `meta.freshness_checked_at` and `feed_lag_at_generation_s` record the eligibility check; `result_age_s`, `feed_lag_s` and `is_stale` are aged when the result is sent, including time spent settling. Compare `t` with your own clock after receipt; this is not a guarantee of delivery within five seconds.
 
+## Try it without a wallet
+
+A shared public trial key is published at [`/llms.txt`](https://api.loopholetape.com/llms.txt) (section "Try it without a wallet") and in [`/pricing`](https://api.loopholetape.com/pricing). Send it as `X-API-Key` on any route priced $0.01 or less (launches, the compact check, the watchlist, the verdict, the screened list, the outcome labels). It has tiny daily caps ($0.50 a day shared, $0.02 a day per caller IP) and answers carry `X-Tape-Trial: 1` and a `meta.trial` block with the remaining amount; trial calls are never counted as payments. For your own budget buy a prepaid key: `GET /v1/keys/trial` ($0.10 of credit) or `GET /v1/keys/new` ($2.00).
+
+**Drop-in pre-buy filter for a self-built pump.fun bot:** [`examples/python/pumpfun_bot_prebuy_filter.py`](examples/python/pumpfun_bot_prebuy_filter.py) asks the free coverage check, then the $0.01 verdict with your key, and returns `(ok, reason)`; it fails open on any error so a slow check never blocks your bot. **Outcome labels for grading your own signals:** `GET /v1/outcome/{mint}` ($0.001) and `GET /v1/outcome/batch?mints=` (up to 40, $0.01) return, by the fixed public rule, whether a mint rugged or truly graduated and when. **Free feeds:** Atom feeds of graduation odds, Robinhood Chain ring flags and daily statistics at [`/feeds`](https://api.loopholetape.com/feeds), usable by any RSS bot.
+
 ## Pay on Solana, Base, Robinhood Chain or X Layer
 
 Every paid route offers four x402 `accepts` entries: USDC on Solana mainnet and USDC on Base `eip155:8453` (both settled by the Coinbase CDP facilitator since 2026-09-23), USDG on Robinhood Chain `eip155:4663` (facilitator.naven.network) and USD₮0 on X Layer `eip155:196` (PayAI facilitator). USDG and USD₮0 are not default assets in the x402 SDKs, so allow them in your client's spend controls if you want those entries. Clients that pay the first entry can reorder the quote with `?rail=solana|base|usdg|xlayer` (or the `X-Rail` header); the order is Solana, Base, USDG, USD₮0 by default.
