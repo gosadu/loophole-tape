@@ -1,13 +1,16 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.gosadu/loophole-tape",
-  "description": "pump.fun & Robinhood Chain launch data: radar, risk checks, delta feed, datasets, keys. x402 USDC",
-  "repository": {
-    "url": "https://github.com/gosadu/loophole-tape",
-    "source": "github"
-  },
-  "version": "0.6.1",
+  "name": "com.loopholetape/tape",
+  "title": "loophole tape",
+  "description": "Pre-trade rug checks for new pump.fun and Robinhood Chain memecoins, paid per call in USDC via x402",
+  "version": "0.8.0",
   "websiteUrl": "https://api.loopholetape.com",
+  "icons": [
+    {
+      "src": "https://api.loopholetape.com/favicon.svg",
+      "mimeType": "image/svg+xml"
+    }
+  ],
   "remotes": [
     {
       "type": "streamable-http",
