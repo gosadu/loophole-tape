@@ -20,7 +20,7 @@
       "registryType": "mcpb",
       "identifier": "https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.1.0/loopholetape-mcp-0.1.0.mcpb",
       "version": "0.1.0",
-      "fileSha256": "7c90462f87f873c972c9b99cbc7c7389037179c087bf985ec71438ab3d8ea992",
+      "fileSha256": "c4f186cc1c912237ba42060b3c5a783d331f11a9d86f2a6b474c07a44eb10900",
       "transport": {
         "type": "stdio"
       },

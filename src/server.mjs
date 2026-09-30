@@ -404,7 +404,7 @@ function shorten(description, micro) {
 function apiSaid(body) {
   try {
     const doc = JSON.parse(body);
-    const parts = [doc.error, doc.reason, doc.hint, doc.detail].filter((p) => typeof p === "string" && p);
+    const parts = [doc.error, doc.reason, doc.hint, doc.detail, doc.message].filter((p) => typeof p === "string" && p);
     return parts.length ? ` The API said: ${parts.join("; ").slice(0, 400)}` : "";
   } catch {
     return "";
@@ -620,7 +620,7 @@ export class Tape {
       else if (via === "api_key") note = "[charged to the prepaid key]";
       return { content: note ? [text(body), text(note)] : [text(body)] };
     }
-    if (res.status === 402) return failure(this.howToPay(route, via, body));
+    if (res.status === 402 || (via === "trial" && res.status === 429)) return failure(this.howToPay(route, via, body)); // 429: the trial key's daily cap
     // A refusal (uncovered mint, stale feed, a curve we do not model, a bad argument) is never settled by the API.
     const charged = signed
       ? `a payment of ${usd(signed)} had been signed and no receipt came back; the API does not settle a refusal, and the amount still counts toward today's cap`
