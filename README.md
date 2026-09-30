@@ -22,6 +22,17 @@ The five-second eligibility limit is measured at result generation, before settl
 
 A shared public trial key is published at [`/llms.txt`](https://api.loopholetape.com/llms.txt) (section "Try it without a wallet") and in [`/pricing`](https://api.loopholetape.com/pricing). Send it as `X-API-Key` on any route priced $0.02 or less (launches, the compact check, the watchlist, the verdict, the screened list, the outcome labels, and since 2026-09-30 the rug and graduation lists, the creator and wallet cards, the pons curve card and its trades). It has tiny daily caps ($0.50 a day shared, $0.02 a day per caller IP, so one $0.02 answer is a caller's whole day) and answers carry `X-Tape-Trial: 1` and a `meta.trial` block with the remaining amount; trial calls are never counted as payments. For your own budget buy a prepaid key: `GET /v1/keys/trial` ($0.10 of credit) or `GET /v1/keys/new` ($2.00).
 
+**No x402 client and no browser wallet?** Buy a prepaid key with a plain USDC transfer (since 2026-09-30):
+
+```bash
+curl "https://api.loopholetape.com/v1/keys/transfer?usd=2"     # an exact amount, our address on Base and on Solana, a claim URL
+# send exactly that amount of USDC once, from any wallet or exchange, then:
+curl "https://api.loopholetape.com/v1/keys/transfer/claim?quote=...&secret=...&tx=<transaction hash or signature>"
+curl -H "X-API-Key: lt_..." "https://api.loopholetape.com/v1/check/mint/<mint>"
+```
+
+The amount carries a unique fraction of a cent, which is how the transfer is matched to your quote, so send it exactly. The key's credit is the amount received and does not expire. `usd` takes whole cents from 0.10 to 50; the quote stays payable for 7 days. A transfer that matches no quote buys nothing: write to agent@agent.loopholetape.com with the transaction.
+
 **Drop-in pre-buy filter for a self-built pump.fun bot:** [`examples/python/pumpfun_bot_prebuy_filter.py`](examples/python/pumpfun_bot_prebuy_filter.py) asks the free coverage check, then the $0.01 verdict with your key, and returns `(ok, reason)`; it fails open on any error so a slow check never blocks your bot. **Outcome labels for grading your own signals:** `GET /v1/outcome/{mint}` ($0.001) and `GET /v1/outcome/batch?mints=` (up to 40, $0.01) return, by the fixed public rule, whether a mint rugged or truly graduated and when. **Free feeds:** Atom feeds of graduation odds, Robinhood Chain ring flags and daily statistics at [`/feeds`](https://api.loopholetape.com/feeds), usable by any RSS bot.
 
 ## Pay on Solana, Base, Robinhood Chain or X Layer
@@ -142,6 +153,7 @@ Connect to `https://api.loopholetape.com/mcp` (33 tools, 10 free; protocol revis
 - **Compared in public.** [`/compare`](https://api.loopholetape.com/compare) shows our calls and RugCheck's free report on the same mints against the settled outcome, with the method, the timing of each side and the raw rows.
 - **A 404 that routes (2026-09-30).** A path that does not exist answers 404 with `did_you_mean`: up to six real routes that share a word with the guess, free ones first, each with its price, plus the index documents (`/`, `/llms.txt`, `/openapi.json`, `/v1/x402/resources`).
 - **Help first in the 402 (2026-09-30).** In the 402 body, `how`, `docs`, `openapi` and `no_x402_client` (the public trial key, the browser checkout, the prepaid key) now come before `resource`, `accepts` and `extensions`. Same fields and values; the `PAYMENT-REQUIRED` header is unchanged.
+- **A key by plain transfer (2026-09-30).** `GET /v1/keys/transfer?usd=2` quotes an exact USDC amount on Base or Solana; after the transfer, `GET /v1/keys/transfer/claim` answers a prepaid key. No x402 client, no wallet extension, no memo.
 
 ## Pay from Python (reference client)
 
