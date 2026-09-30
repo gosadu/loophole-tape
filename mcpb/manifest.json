@@ -1,0 +1,85 @@
+{
+  "manifest_version": "0.3",
+  "name": "loopholetape-mcp",
+  "display_name": "loophole tape: Solana token safety",
+  "version": "0.1.0",
+  "description": "Pre-trade safety checks for Solana tokens and pump.fun launches. Free for any mint; paid depth per call in USDC from your own wallet.",
+  "long_description": "Ask about a token before you buy it. token_safety is free for every Solana mint: mint and freeze authority, Token-2022 holder risks, the ten largest token accounts, the launch venue and a verdict word with its reason. For pump.fun launches, recorded from the chain as they happen, paid tools add calibrated rug and graduation odds, holders, the creator's record, bundle and sniper cohorts and trade flow, from $0.001 to $0.04 a call. Robinhood Chain (pons) launches are covered too.\n\nPaid tools are paid per call in USDC on Solana over x402, signed on this machine. The server pays one address only (loophole tape's), never more than the tool's listed price, and never more than your per-call and per-day caps. No account and no subscription. Without a wallet the free tools work and a shared trial key answers a few paid calls a day.\n\nRun by the project's automated agent. Nothing here is a safety guarantee: a verdict describes what was observed on the chain.",
+  "author": {
+    "name": "loophole tape",
+    "email": "agent@agent.loopholetape.com",
+    "url": "https://api.loopholetape.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gosadu/loophole-tape"
+  },
+  "homepage": "https://api.loopholetape.com",
+  "documentation": "https://github.com/gosadu/loophole-tape#local-mcp-server",
+  "support": "https://github.com/gosadu/loophole-tape/issues",
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.mjs"],
+      "env": {
+        "SOLANA_PRIVATE_KEY": "${user_config.solana_private_key}",
+        "LOOPHOLETAPE_API_KEY": "${user_config.api_key}",
+        "LOOPHOLETAPE_MAX_USD_PER_CALL": "${user_config.max_usd_per_call}",
+        "LOOPHOLETAPE_MAX_USD_PER_DAY": "${user_config.max_usd_per_day}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "token_safety", "description": "Free safety check for any Solana token; buys the $0.01 verdict with odds when a pump.fun launch is live." },
+    { "name": "verdict", "description": "avoid / caution / no flags for one live pump.fun mint, with calibrated odds ($0.01)." },
+    { "name": "mint_risk_card", "description": "Full risk card: holders, creator record, cohorts, market ($0.025)." },
+    { "name": "launches_screened", "description": "New pump.fun launches that passed the verdict rule ($0.01)." },
+    { "name": "launches_since", "description": "Every new pump.fun launch since a cursor, with rug odds ($0.001)." },
+    { "name": "radar", "description": "Free: the youngest mints ranked by rug odds and by graduation odds." },
+    { "name": "wallet_status", "description": "Free: payment mode, wallet balance, caps, today's spend and every price." }
+  ],
+  "tools_generated": true,
+  "keywords": ["solana", "token safety", "pump.fun", "rug check", "memecoin", "x402", "trading", "robinhood chain"],
+  "license": "MIT",
+  "compatibility": {
+    "runtimes": {
+      "node": ">=20.0.0"
+    }
+  },
+  "user_config": {
+    "solana_private_key": {
+      "type": "string",
+      "title": "Solana wallet private key (optional)",
+      "description": "The 64-byte secret key of a wallet that holds USDC, in base58 (not the public address). Use a dedicated wallet with a few dollars in it; no SOL is needed. Leave empty to use the free tools and the shared trial key.",
+      "sensitive": true,
+      "required": false
+    },
+    "api_key": {
+      "type": "string",
+      "title": "Prepaid API key (optional)",
+      "description": "A loophole tape key (lt_...) bought with a plain USDC transfer. Used instead of a wallet.",
+      "sensitive": true,
+      "required": false
+    },
+    "max_usd_per_call": {
+      "type": "number",
+      "title": "Most to pay for one call (USD)",
+      "description": "Tools priced above this are hidden and never paid. The payment library caps one payment at $1 as well.",
+      "default": 0.05,
+      "min": 0.001,
+      "max": 1,
+      "required": false
+    },
+    "max_usd_per_day": {
+      "type": "number",
+      "title": "Most to pay in one day (USD)",
+      "description": "Counts every payment signed in one UTC day.",
+      "default": 1,
+      "min": 0.01,
+      "max": 100,
+      "required": false
+    }
+  }
+}

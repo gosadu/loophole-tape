@@ -1,20 +1,60 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "com.loopholetape/tape",
-  "title": "loophole tape",
-  "description": "Pre-trade rug checks for new pump.fun and Robinhood Chain memecoins, paid per call in USDC via x402",
-  "version": "0.9.0",
+  "name": "com.loopholetape/solana-token-safety",
+  "title": "loophole tape: Solana token safety",
+  "description": "Solana token safety and pump.fun rug checks. Free for any mint; paid depth per call in USDC.",
+  "version": "0.1.0",
   "websiteUrl": "https://api.loopholetape.com",
+  "repository": {
+    "url": "https://github.com/gosadu/loophole-tape",
+    "source": "github"
+  },
   "icons": [
     {
       "src": "https://api.loopholetape.com/favicon.svg",
       "mimeType": "image/svg+xml"
     }
   ],
-  "remotes": [
+  "packages": [
     {
-      "type": "streamable-http",
-      "url": "https://api.loopholetape.com/mcp"
+      "registryType": "mcpb",
+      "identifier": "https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.1.0/loopholetape-mcp-0.1.0.mcpb",
+      "version": "0.1.0",
+      "fileSha256": "7c90462f87f873c972c9b99cbc7c7389037179c087bf985ec71438ab3d8ea992",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "SOLANA_PRIVATE_KEY",
+          "description": "Optional. Base58 secret key of a wallet holding USDC on Solana; pays the paid tools per call. Use a dedicated wallet with a few dollars. No SOL needed.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "SOLANA_KEYPAIR_PATH",
+          "description": "Optional. Path to a solana-keygen JSON keypair, instead of SOLANA_PRIVATE_KEY.",
+          "isRequired": false
+        },
+        {
+          "name": "LOOPHOLETAPE_API_KEY",
+          "description": "Optional. A prepaid lt_... key, used instead of a wallet.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "LOOPHOLETAPE_MAX_USD_PER_CALL",
+          "description": "Most to pay for one call, in USD. Tools priced above it are hidden.",
+          "isRequired": false,
+          "default": "0.05"
+        },
+        {
+          "name": "LOOPHOLETAPE_MAX_USD_PER_DAY",
+          "description": "Most to sign in one UTC day, in USD.",
+          "isRequired": false,
+          "default": "1"
+        }
+      ]
     }
   ]
 }

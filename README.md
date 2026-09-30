@@ -1,4 +1,4 @@
-# loophole tape — pump.fun risk checks from $0.005
+# loophole tape — Solana token safety and pump.fun rug checks, free to $0.025 a call
 
 **Base URL:** `https://api.loopholetape.com`
 **Payment:** [x402](https://github.com/x402-foundation/x402) v2, scheme `exact`, USDC on **Solana mainnet** (`solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) **or Base** (`eip155:8453`). Solana payments are settled by `https://facilitator.payai.network`, Base payments by Coinbase's facilitator `https://api.cdp.coinbase.com/platform/v2/x402`. Every 402 lists both networks in `accepts[]`; pay whichever your wallet supports. The facilitator pays the network fee on either chain; a caller needs only USDC. No account or API key required.
@@ -7,6 +7,50 @@
 Check one mint for **$0.005**, or up to five caller-selected mints for **$0.01 total**. Every result carries **calibrated probabilities**, P(rug within 5 minutes) for checks younger than 30 seconds and P(true graduation) at any age, fitted on our own capture and validated out of time; the validation tables are public at `/v1/calibration`. Get observed creator exits, early-wallet selling, drains, migration state, concentration and buyer flow in a compact JSON result. Use it before a swap or to monitor a position. Findings carry first-observed times and evidence; `no_flags_observed` means no documented flags were observed, not that a token is safe.
 
 **Free coverage, free watch availability, no charge for unchanged watched events.** New paid checks require full live coverage for every mint and feed lag no greater than five seconds. An unpaid request with well-formed mints returns the ordinary 402 quote; when the payment (or prepaid key) arrives, uncovered mints are refused unpaid before verification with `live_examples` (mints covered right now) and the free `/v1/radar` to pick from, and eligibility is checked again after verification. Stale feeds and malformed mints are refused before payment. The existing full card remains $0.025 and the existing free routes remain free.
+
+## Local MCP server: one command, pays from your own wallet
+
+`loopholetape-mcp` is a small local MCP server (stdio) for Claude Desktop, Claude Code, Cursor and any other MCP client. It lists this API's tools and pays the paid ones per call in USDC on Solana, signed on your machine. Most MCP clients cannot sign an x402 payment; this does it for them. No account, no subscription.
+
+**Claude Desktop:** download [`loopholetape-mcp-0.1.0.mcpb`](https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.1.0/loopholetape-mcp-0.1.0.mcpb) and open it. The wallet key is optional; the app keeps it in the system keychain.
+
+**Any MCP client** (Node.js 20 or newer):
+
+```json
+{
+  "mcpServers": {
+    "loopholetape": {
+      "command": "npx",
+      "args": ["-y", "https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.1.0/loopholetape-mcp-0.1.0.tgz"],
+      "env": { "SOLANA_KEYPAIR_PATH": "/absolute/path/to/a-small-wallet.json" }
+    }
+  }
+}
+```
+
+Claude Code: `claude mcp add loopholetape -e SOLANA_KEYPAIR_PATH=/absolute/path/to/a-small-wallet.json -- npx -y https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.1.0/loopholetape-mcp-0.1.0.tgz`
+
+**What is free and what costs.** `token_safety` is free for every Solana mint: mint and freeze authority, Token-2022 holder risks, the ten largest token accounts, the launch venue, and a verdict word with its reason. For a pump.fun launch in its first hours it also buys the $0.01 verdict with calibrated rug and graduation odds; `depth=free` never pays, and nothing is bought when the paid answer would add nothing. The other paid tools cost $0.001 to $0.04 a call and say so in their description. `radar`, `market_regime`, `check_coverage` and `wallet_status` are free. With no wallet and no key, the free tools work and a shared trial key answers a few paid calls a day.
+
+**What it will not do** (enforced in [`src/server.mjs`](src/server.mjs), one file, with [tests](test/server.test.mjs); reviewed adversarially before the first release, and the review's findings are fixed in 0.1.0):
+
+- sign a payment to any address other than this API's (`9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT`), in any asset other than USDC, on any network other than Solana mainnet, or with your own wallet as the fee payer;
+- sign more for one call than the tool's listed price or `LOOPHOLETAPE_MAX_USD_PER_CALL` (default $0.05; the payment library caps one payment at $1 on top);
+- sign more in one UTC day than `LOOPHOLETAPE_MAX_USD_PER_DAY` (default $1): every payment is counted in `~/.loopholetape-mcp/spend.json` under a lock *before* it is signed, settled or not, so the cap survives restarts, crashes and several copies of the server sharing that directory; if the file cannot be read or written, paid calls are refused rather than uncounted;
+- write, log or send the key. A pasted public address is refused (the key must be the 64-byte secret), so no wallet is ever derived from public text.
+
+Use a dedicated wallet that holds a few dollars of USDC. It needs no SOL: the facilitator pays the network fee.
+
+| Variable | Meaning |
+|---|---|
+| `SOLANA_KEYPAIR_PATH` | path to a `solana-keygen` JSON keypair |
+| `SOLANA_PRIVATE_KEY` | or the 64-byte secret key itself, base58 |
+| `LOOPHOLETAPE_API_KEY` | a prepaid `lt_...` key instead of a wallet (see below) |
+| `LOOPHOLETAPE_MAX_USD_PER_CALL`, `LOOPHOLETAPE_MAX_USD_PER_DAY` | spending caps, default 0.05 and 1 |
+| `SOLANA_RPC_URL` | your own RPC for the token and balance reads (default: the public mainnet endpoint) |
+| `LOOPHOLETAPE_TRIAL=0` | never use the shared trial key |
+
+Build it yourself: `npm ci --ignore-scripts && npm test && npm run build` reproduces `dist/loopholetape-mcp.mjs` from `src/server.mjs` and the pinned dependencies.
 
 ## Start here
 

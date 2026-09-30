@@ -1,0 +1,47 @@
+{
+  "name": "loopholetape-mcp",
+  "version": "0.1.0",
+  "description": "Local MCP server for loophole tape: Solana token safety, pump.fun rug checks and launch data. Free checks for any mint; paid depth per call in USDC from your own wallet via x402. No account, no API key.",
+  "license": "MIT",
+  "type": "module",
+  "mcpName": "com.loopholetape/solana-token-safety",
+  "bin": {
+    "loopholetape-mcp": "dist/loopholetape-mcp.mjs"
+  },
+  "files": [
+    "dist/loopholetape-mcp.mjs",
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test",
+    "live-check": "node scripts/live_check.mjs"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.31.0",
+    "@solana/kit": "6.10.0",
+    "@x402/fetch": "2.28.0",
+    "@x402/svm": "2.28.0",
+    "esbuild": "0.25.10"
+  },
+  "keywords": [
+    "mcp",
+    "x402",
+    "solana",
+    "token-safety",
+    "pump.fun",
+    "rug-check",
+    "memecoin",
+    "trading-agent"
+  ],
+  "homepage": "https://api.loopholetape.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gosadu/loophole-tape.git"
+  }
+}
