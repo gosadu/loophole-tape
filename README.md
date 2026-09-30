@@ -2,7 +2,7 @@
 
 **Base URL:** `https://api.loopholetape.com`
 **Payment:** [x402](https://github.com/x402-foundation/x402) v2, scheme `exact`, USDC on **Solana mainnet** (`solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`) **or Base** (`eip155:8453`). Solana payments are settled by `https://facilitator.payai.network`, Base payments by Coinbase's facilitator `https://api.cdp.coinbase.com/platform/v2/x402`. Every 402 lists both networks in `accepts[]`; pay whichever your wallet supports. The facilitator pays the network fee on either chain; a caller needs only USDC. No account or API key required.
-**Version:** 0.8.0 (schema 2.0)
+**Version:** 0.9.0 (schema 2.0)
 
 Check one mint for **$0.005**, or up to five caller-selected mints for **$0.01 total**. Every result carries **calibrated probabilities**, P(rug within 5 minutes) for checks younger than 30 seconds and P(true graduation) at any age, fitted on our own capture and validated out of time; the validation tables are public at `/v1/calibration`. Get observed creator exits, early-wallet selling, drains, migration state, concentration and buyer flow in a compact JSON result. Use it before a swap or to monitor a position. Findings carry first-observed times and evidence; `no_flags_observed` means no documented flags were observed, not that a token is safe.
 
@@ -131,7 +131,7 @@ Use the live documents for current capabilities, schemas and prices:
 
 Connect to `https://api.loopholetape.com/mcp` (33 tools, 10 free; protocol revisions 2024-11-05 to 2026-07-28; the domain-verified registry name `com.loopholetape/tape` is pending). Start with the free `token_check` tool (verdict word, one reason, coverage) before any paid call.
 
-## New on 2026-09-29
+## New in 0.9.0 (2026-09-29)
 
 - **Any Solana token.** The free `token_check` now answers any SPL or Token-2022 mint, not only pump.fun mints in our window. Outside the window the answer is thin and says so: mint and freeze authority, Token-2022 extensions that let someone seize, freeze, pause or tax holders, the ten largest token accounts with pool and curve vaults named, and the launch venue. Its word is `caution` or `no_flags_observed_on_chain`; it never says a token is safe.
 - **Pool truth on Robinhood Chain.** `GET /v1/rhc/pool/{address}` (free) reads a Uniswap v3 or v4 pool from the chain: reserves, swaps, callers and volume over the last 1,000 blocks, and a `phantom_volume` flag when the volume cannot be reconciled with the reserves. The rule and its thresholds are in `/v1/labels`.

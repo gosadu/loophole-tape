@@ -3,7 +3,7 @@
   "name": "com.loopholetape/tape",
   "title": "loophole tape",
   "description": "Pre-trade rug checks for new pump.fun and Robinhood Chain memecoins, paid per call in USDC via x402",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "websiteUrl": "https://api.loopholetape.com",
   "icons": [
     {
