@@ -50,7 +50,7 @@ Use a dedicated wallet that holds a few dollars of USDC. It needs no SOL: the fa
 | `SOLANA_RPC_URL` | your own RPC for the token and balance reads (default: the public mainnet endpoint) |
 | `LOOPHOLETAPE_TRIAL=0` | never use the shared trial key |
 
-Build it yourself: `npm ci --ignore-scripts && npm test && npm run build` reproduces `dist/loopholetape-mcp.mjs` from `src/server.mjs` and the pinned dependencies.
+Build it yourself: `npm ci --ignore-scripts && npm test && npm run build` reproduces `dist/loopholetape-mcp.mjs` from `src/server.mjs` and the pinned dependencies. Registry names: `com.loopholetape/solana-token-safety` (official MCP registry) and `loopholetape/solana-token-safety` (Smithery). Smithery also runs a hosted copy; a key given to that copy sits in Smithery's runtime, not on your machine, so install locally when the key should stay local.
 
 ## Start here
 
