@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "loopholetape-mcp",
   "display_name": "loophole tape: Solana token safety",
-  "version": "0.1.0",
-  "description": "Pre-trade safety checks for Solana tokens and pump.fun launches. Free for any mint; paid depth per call in USDC from your own wallet.",
-  "long_description": "Ask about a token before you buy it. token_safety is free for every Solana mint: mint and freeze authority, Token-2022 holder risks, the ten largest token accounts, the launch venue and a verdict word with its reason. For pump.fun launches, recorded from the chain as they happen, paid tools add calibrated rug and graduation odds, holders, the creator's record, bundle and sniper cohorts and trade flow, from $0.001 to $0.04 a call. Robinhood Chain (pons) launches are covered too.\n\nPaid tools are paid per call in USDC on Solana over x402, signed on this machine. The server pays one address only (loophole tape's), never more than the tool's listed price, and never more than your per-call and per-day caps. No account and no subscription. Without a wallet the free tools work and a shared trial key answers a few paid calls a day.\n\nRun by the project's automated agent. Nothing here is a safety guarantee: a verdict describes what was observed on the chain.",
+  "version": "0.2.0",
+  "description": "Pre-trade safety checks for Solana tokens and pump.fun launches. Free for any mint; paid depth per call in USDC from your own wallet, on Solana or Base.",
+  "long_description": "Ask about a token before you buy it. token_safety is free for every Solana mint: mint and freeze authority, Token-2022 holder risks, the ten largest token accounts, the launch venue and a verdict word with its reason. For pump.fun launches, recorded from the chain as they happen, paid tools add calibrated rug and graduation odds, holders, the creator's record, bundle and sniper cohorts and trade flow, from $0.001 to $0.04 a call. Robinhood Chain (pons) launches are covered too.\n\nPaid tools are paid per call in USDC over x402, signed on this machine, from a Solana wallet or a Base (EVM) wallet. The server pays loophole tape's addresses only, never more than the tool's listed price, and never more than your per-call and per-day caps. No account and no subscription. Without a wallet the free tools work and a shared trial key answers a few paid calls a day.\n\nRun by the project's automated agent. Nothing here is a safety guarantee: a verdict describes what was observed on the chain.",
   "author": {
     "name": "loophole tape",
     "email": "agent@agent.loopholetape.com",
@@ -22,9 +22,12 @@
     "entry_point": "server/index.mjs",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/index.mjs"],
+      "args": [
+        "${__dirname}/server/index.mjs"
+      ],
       "env": {
         "SOLANA_PRIVATE_KEY": "${user_config.solana_private_key}",
+        "EVM_PRIVATE_KEY": "${user_config.evm_private_key}",
         "LOOPHOLETAPE_API_KEY": "${user_config.api_key}",
         "LOOPHOLETAPE_MAX_USD_PER_CALL": "${user_config.max_usd_per_call}",
         "LOOPHOLETAPE_MAX_USD_PER_DAY": "${user_config.max_usd_per_day}"
@@ -32,16 +35,46 @@
     }
   },
   "tools": [
-    { "name": "token_safety", "description": "Free safety check for any Solana token; buys the $0.01 verdict with odds when a pump.fun launch is live." },
-    { "name": "verdict", "description": "avoid / caution / no flags for one live pump.fun mint, with calibrated odds ($0.01)." },
-    { "name": "mint_risk_card", "description": "Full risk card: holders, creator record, cohorts, market ($0.025)." },
-    { "name": "launches_screened", "description": "New pump.fun launches that passed the verdict rule ($0.01)." },
-    { "name": "launches_since", "description": "Every new pump.fun launch since a cursor, with rug odds ($0.001)." },
-    { "name": "radar", "description": "Free: the youngest mints ranked by rug odds and by graduation odds." },
-    { "name": "wallet_status", "description": "Free: payment mode, wallet balance, caps, today's spend and every price." }
+    {
+      "name": "token_safety",
+      "description": "Free safety check for any Solana token; buys the $0.01 verdict with odds when a pump.fun launch is live."
+    },
+    {
+      "name": "verdict",
+      "description": "avoid / caution / no flags for one live pump.fun mint, with calibrated odds ($0.01)."
+    },
+    {
+      "name": "mint_risk_card",
+      "description": "Full risk card: holders, creator record, cohorts, market ($0.025)."
+    },
+    {
+      "name": "launches_screened",
+      "description": "New pump.fun launches that passed the verdict rule ($0.01)."
+    },
+    {
+      "name": "launches_since",
+      "description": "Every new pump.fun launch since a cursor, with rug odds ($0.001)."
+    },
+    {
+      "name": "radar",
+      "description": "Free: the youngest mints ranked by rug odds and by graduation odds."
+    },
+    {
+      "name": "wallet_status",
+      "description": "Free: payment mode, wallet balance, caps, today's spend and every price."
+    }
   ],
   "tools_generated": true,
-  "keywords": ["solana", "token safety", "pump.fun", "rug check", "memecoin", "x402", "trading", "robinhood chain"],
+  "keywords": [
+    "solana",
+    "token safety",
+    "pump.fun",
+    "rug check",
+    "memecoin",
+    "x402",
+    "trading",
+    "robinhood chain"
+  ],
   "license": "MIT",
   "compatibility": {
     "runtimes": {
@@ -53,6 +86,13 @@
       "type": "string",
       "title": "Solana wallet private key (optional)",
       "description": "The 64-byte secret key of a wallet that holds USDC, in base58 (not the public address). Use a dedicated wallet with a few dollars in it; no SOL is needed. Leave empty to use the free tools and the shared trial key.",
+      "sensitive": true,
+      "required": false
+    },
+    "evm_private_key": {
+      "type": "string",
+      "title": "Base wallet private key (optional)",
+      "description": "The private key (0x + 64 hex) of an EVM wallet that holds USDC on Base; used when no Solana wallet is set, or when the Solana one cannot pay. Use a dedicated wallet with a few dollars; no ETH is needed.",
       "sensitive": true,
       "required": false
     },

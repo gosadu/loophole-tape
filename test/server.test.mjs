@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
 
-import { PAY_TO, Refusal, SOLANA, Spend, Tape, USDC, buildUrl, config, parseRpc, pinned, routeFromResource, secretBytes, usd } from "../src/server.mjs";
+import { BASE_CHAIN, PAY_TO, PAY_TO_BASE, Refusal, SOLANA, Spend, Tape, USDC, USDC_BASE, buildUrl, config, evmSecret, parseRpc, pinned, routeFromResource, secretBytes, usd } from "../src/server.mjs";
 
 const LIVE = "LiveMint1111111111111111111111111111111pump";
 const OLD = "OldMint11111111111111111111111111111111pump";
@@ -14,7 +14,7 @@ const OTHER = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263";
 const OTHER_ADDRESS = "11111111111111111111111111111111";
 const FEE_PAYER = "BENrLoUbndxoNMUS5JXApGMtNykLjFXXixMtpDwDR9SP";
 
-const seen = { paymentHeaders: 0, keys: [], paths: [] };
+const seen = { paymentHeaders: 0, keys: [], paths: [], payloads: [] };
 let api;
 let base;
 
@@ -57,12 +57,14 @@ function freeCheck(token) {
   return { ok: true, coverage: "thin", data: { token, venue: "unknown", verdict: "no_flags_observed_on_chain", next: { card: paid("mint_risk_card", 0.025, `/v1/mint/${token}`) } } };
 }
 
-function required(payTo, feePayer = FEE_PAYER) {
+const BASE_ACCEPT = { scheme: "exact", network: BASE_CHAIN, amount: "10000", asset: USDC_BASE, payTo: PAY_TO_BASE, maxTimeoutSeconds: 60, extra: { name: "USD Coin", version: "2" } };
+
+function required(payTo, feePayer = FEE_PAYER, baseOnly = false) {
   const doc = {
     x402Version: 2,
     error: "Payment required",
     resource: { url: `${base}/v1/verdict/x`, description: "test", mimeType: "application/json" },
-    accepts: [{ scheme: "exact", network: SOLANA, amount: "10000", asset: USDC, payTo, maxTimeoutSeconds: 60, extra: { feePayer } }],
+    accepts: baseOnly ? [BASE_ACCEPT] : [{ scheme: "exact", network: SOLANA, amount: "10000", asset: USDC, payTo, maxTimeoutSeconds: 60, extra: { feePayer } }, BASE_ACCEPT],
   };
   return Buffer.from(JSON.stringify(doc)).toString("base64");
 }
@@ -103,7 +105,22 @@ before(async () => {
       if (key === "lt_trial" || key === "lt_paid") return send(200, { ok: true, data: { id, path: url.pathname } });
       const payTo = id === "WRONGPAYTO" ? OTHER_ADDRESS : PAY_TO;
       const feePayer = id === "SELFPAY" ? new URLSearchParams(idQuery || "").get("wallet") || FEE_PAYER : FEE_PAYER;
-      return send(402, { error: "Payment required", reason: "no_payment", no_x402_client: { public_trial_key: { header: "X-API-Key: lt_trial", note: "shared" } } }, { "PAYMENT-REQUIRED": required(payTo, feePayer) });
+      if (req.headers["payment-signature"]) {   // a signed payment arrived: settle it offline when it is a Base authorization to our address
+        let payload = null;
+        try {
+          payload = JSON.parse(Buffer.from(req.headers["payment-signature"], "base64").toString("utf8"));
+        } catch {
+          payload = null;
+        }
+        seen.payloads.push(payload);
+        const accepted = payload?.accepted || {};
+        if (payload?.payload?.signature && accepted.network === BASE_CHAIN && accepted.payTo === PAY_TO_BASE && accepted.amount === "10000") {
+          const receipt = Buffer.from(JSON.stringify({ success: true, transaction: `0x${"ab".repeat(32)}`, network: BASE_CHAIN, payer: payload.payload.authorization?.from })).toString("base64");
+          return send(200, { ok: true, data: { id, path: url.pathname, paid_on: "base" } }, { "PAYMENT-RESPONSE": receipt });
+        }
+        return send(402, { error: "Payment required", reason: "invalid_payment" }, { "PAYMENT-REQUIRED": required(payTo, feePayer, id === "BASEPAY") });
+      }
+      return send(402, { error: "Payment required", reason: "no_payment", no_x402_client: { public_trial_key: { header: "X-API-Key: lt_trial", note: "shared" } } }, { "PAYMENT-REQUIRED": required(payTo, feePayer, id === "BASEPAY") });
     }
     return send(404, { ok: false, error: "not_found" });
   });
@@ -140,6 +157,25 @@ test("pinned terms: our address, USDC, Solana mainnet, at most the listed price,
   assert.deepEqual(pinned(undefined, 10000, OTHER_ADDRESS), []);
   assert.deepEqual(pinned([good], NaN, OTHER_ADDRESS), [], "no price, no payment");
   assert.deepEqual(pinned([good], 0, OTHER_ADDRESS), []);
+  // the Base rail: only with an EVM wallet, only our Base address and native USDC on chain 8453
+  const evm = "0x1111111111111111111111111111111111111111";
+  assert.equal(pinned([BASE_ACCEPT], 10000, { solana: null, evm }).length, 1);
+  assert.equal(pinned([{ ...BASE_ACCEPT, payTo: PAY_TO_BASE.toLowerCase() }], 10000, { solana: null, evm }).length, 1, "addresses compare without case");
+  assert.equal(pinned([BASE_ACCEPT], 10000, { solana: OTHER_ADDRESS, evm: null }).length, 0, "no EVM wallet, no Base payment");
+  assert.equal(pinned([good], 10000, { solana: null, evm }).length, 0, "no Solana wallet, no Solana payment");
+  assert.equal(pinned([good, BASE_ACCEPT], 10000, { solana: OTHER_ADDRESS, evm }).length, 2, "both wallets: both kept, the API's order decides");
+  for (const bad of [{ ...BASE_ACCEPT, payTo: evm }, { ...BASE_ACCEPT, asset: "0x0000000000000000000000000000000000000000" }, { ...BASE_ACCEPT, network: "eip155:1" }, { ...BASE_ACCEPT, amount: "10001" }]) {
+    assert.equal(pinned([bad], 10000, { solana: null, evm }).length, 0, JSON.stringify(bad));
+  }
+});
+
+test("the EVM key must be a 32-byte private key; an address is refused and never quoted", () => {
+  const key = `0x${"7".repeat(64)}`;
+  assert.equal(evmSecret({ evmSecret: key }), key);
+  assert.equal(evmSecret({}), null);
+  assert.equal(evmSecret({ evmSecret: "7".repeat(64) }), key, "a key exported without its 0x prefix");
+  assert.throws(() => evmSecret({ evmSecret: `0x${"7".repeat(40)}` }), /public address/);
+  assert.throws(() => evmSecret({ evmSecret: "not-a-key-zzzz" }), (error) => !error.message.includes("zzzz"));
 });
 
 test("routes from the manifest: a price that is not a positive whole number of micro-USDC, or a path off /v1/, is dropped", () => {
@@ -344,18 +380,46 @@ test("a wallet: caps refuse before anything is sent; a quote naming another addr
   const result = await wrong.call("verdict", { mint: "WRONGPAYTO" });
   assert.equal(result.isError, true);
   assert.match(texts(result)[0], /nothing was paid: the API's quote did not match/);
-  const self = await wrong.call("verdict", { mint: `SELFPAY?wallet=${(await wrong.wallet()).address}` });
+  const self = await wrong.call("verdict", { mint: `SELFPAY?wallet=${(await wrong.wallet()).solana.address}` });
   assert.equal(self.isError, true, "the wallet itself as fee payer");
   assert.equal(seen.paymentHeaders, 0, "no payment header ever left this process");
   assert.equal(wrong.spend.read().micro, 0, "the reservations were refunded");
 
   const status = JSON.parse(texts(await tape({ SOLANA_PRIVATE_KEY: key, SOLANA_RPC_URL: "http://127.0.0.1:9" }).call("wallet_status", {}))[0]);
   assert.equal(status.mode, "wallet");
-  assert.equal(status.pays_only.to, PAY_TO);
+  assert.deepEqual(status.pays_only.map((p) => p.to), [PAY_TO, PAY_TO_BASE]);
   assert.equal(status.wallet.usdc, null);
+  assert.equal(status.wallet_base, null);
   assert.equal(status.prices_usd.verdict, 0.01);
   assert.equal(status.signed_today_usd, 0);
   assert.ok(!JSON.stringify(status).includes(key.slice(1, 20)));
+});
+
+test("an EVM key pays on Base: the authorization is signed here, the fake settles it, the cap and the note say Base", async () => {
+  const key = `0x${"5".repeat(64)}`;
+  const t = tape({ EVM_PRIVATE_KEY: key, EVM_RPC_URL: "http://127.0.0.1:9" });
+  assert.equal(await t.mode(), "wallet");
+  const status = JSON.parse(texts(await t.call("wallet_status", {}))[0]);
+  assert.equal(status.wallet, null);
+  assert.match(status.wallet_base.address, /^0x[0-9a-fA-F]{40}$/);
+  assert.equal(status.wallet_base.usdc, null);
+  const solanaOnly = await t.call("verdict", { mint: "Abc" });
+  assert.equal(solanaOnly.isError, undefined, "the fake quotes Base as well, so the EVM wallet pays");
+  const before = seen.payloads.length;
+  const result = await t.call("verdict", { mint: "BASEPAY" });
+  assert.equal(result.isError, undefined, texts(result)[0]);
+  assert.equal(JSON.parse(texts(result)[0]).data.paid_on, "base");
+  assert.match(texts(result)[1], /paid \$0\.01 USDC on Base, tx 0xabab/);
+  const payload = seen.payloads[seen.payloads.length - 1];
+  assert.ok(seen.payloads.length > before);
+  assert.equal(payload.accepted.payTo, PAY_TO_BASE);
+  assert.equal(payload.payload.authorization.to, PAY_TO_BASE);
+  assert.equal(payload.payload.authorization.value, "10000");
+  assert.equal(payload.payload.authorization.from.toLowerCase(), status.wallet_base.address.toLowerCase());
+  assert.deepEqual([t.spend.read().micro, t.spend.read().settled, t.spend.read().payments], [20000, 20000, 2]);
+  const cheap = tape({ EVM_PRIVATE_KEY: key, LOOPHOLETAPE_MAX_USD_PER_CALL: "0.005" });
+  assert.match(texts(await cheap.call("verdict", { mint: "BASEPAY" }))[0], /per-call cap/);
+  assert.equal(seen.payloads.length, before + 1, "the capped call signed nothing");
 });
 
 test("a malformed key leaves the free tools working and is named without its value; the wallet loads once", async () => {

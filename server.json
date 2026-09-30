@@ -2,8 +2,8 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "com.loopholetape/solana-token-safety",
   "title": "loophole tape: Solana token safety",
-  "description": "Solana token safety and pump.fun rug checks. Free for any mint; paid depth per call in USDC.",
-  "version": "0.1.0",
+  "description": "Solana token safety and pump.fun rug checks: free for any mint, paid depth in USDC on Solana or Base",
+  "version": "0.2.0",
   "websiteUrl": "https://api.loopholetape.com",
   "repository": {
     "url": "https://github.com/gosadu/loophole-tape",
@@ -18,9 +18,9 @@
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.1.0/loopholetape-mcp-0.1.0.mcpb",
-      "version": "0.1.0",
-      "fileSha256": "c4f186cc1c912237ba42060b3c5a783d331f11a9d86f2a6b474c07a44eb10900",
+      "identifier": "https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.2.0/loopholetape-mcp-0.2.0.mcpb",
+      "version": "0.2.0",
+      "fileSha256": "17145791a476c9abebcab06a49dde98a88706f482e5dd9583bf2d8ad7ca8d998",
       "transport": {
         "type": "stdio"
       },
@@ -28,6 +28,12 @@
         {
           "name": "SOLANA_PRIVATE_KEY",
           "description": "Optional. Base58 secret key of a wallet holding USDC on Solana; pays the paid tools per call. Use a dedicated wallet with a few dollars. No SOL needed.",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "EVM_PRIVATE_KEY",
+          "description": "Optional. Private key (0x + 64 hex) of an EVM wallet holding USDC on Base; pays when no Solana wallet is set. No ETH needed.",
           "isRequired": false,
           "isSecret": true
         },

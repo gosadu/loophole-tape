@@ -20,12 +20,18 @@ import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, s
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
 export const PAY_TO = "9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT"; // loophole tape's Solana address
 export const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"; // USDC on Solana mainnet
 export const SOLANA = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"; // Solana mainnet, CAIP-2
+export const PAY_TO_BASE = "0x25d408eF54e60F3006bD13d5A040d525E2F359c2"; // loophole tape's Base address
+export const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"; // native USDC on Base
+export const BASE_CHAIN = "eip155:8453"; // Base mainnet, CAIP-2
 const DEFAULT_BASE = "https://api.loopholetape.com";
 const DEFAULT_RPC = "https://api.mainnet-beta.solana.com";
+const DEFAULT_EVM_RPC = "https://mainnet.base.org";
+const EVM_KEY = /^0x[0-9a-fA-F]{64}$/;
+const same = (a, b) => typeof a === "string" && typeof b === "string" && a.toLowerCase() === b.toLowerCase();
 const CATALOG_TTL_MS = 15 * 60_000;
 const CATALOG_RETRY_MS = 60_000;
 const DESCRIPTION_MAX = 700;
@@ -109,6 +115,8 @@ export function config(env = process.env) {
     secret: value("SOLANA_PRIVATE_KEY"),
     keypairPath: value("SOLANA_KEYPAIR_PATH"),
     rpcUrl: value("SOLANA_RPC_URL"),
+    evmSecret: value("EVM_PRIVATE_KEY"),
+    evmRpcUrl: value("EVM_RPC_URL"),
     capCall: toMicro(positive("LOOPHOLETAPE_MAX_USD_PER_CALL", 0.05)),
     capDay: toMicro(positive("LOOPHOLETAPE_MAX_USD_PER_DAY", 1)),
     trial: !["0", "false", "off"].includes((value("LOOPHOLETAPE_TRIAL") || "").toLowerCase()),
@@ -118,24 +126,38 @@ export function config(env = process.env) {
 }
 
 /**
- * The payment terms this server is willing to sign: our address, USDC, Solana mainnet, at most maxMicro, and a fee payer
- * that is a Solana address other than the paying wallet (so the wallet never pays the network fee itself).
+ * The payment terms this server is willing to sign, for the wallets it holds (`wallets` = { solana: address|null, evm: address|null }):
+ * on Solana our address, USDC, mainnet, at most maxMicro, and a fee payer that is a Solana address other than the paying wallet (so
+ * the wallet never pays the network fee itself); on Base our Base address, native USDC, chain 8453, at most maxMicro (the payer signs
+ * an authorization; the facilitator submits and pays gas). Anything else is not signed.
  */
-export function pinned(requirements, maxMicro, walletAddress) {
+export function pinned(requirements, maxMicro, wallets) {
   if (!isPrice(maxMicro)) return [];
+  const holds = typeof wallets === "string" ? { solana: wallets, evm: null } : wallets || {};
   return (requirements || []).filter((r) => {
     try {
       const amount = BigInt(r.amount);
-      const feePayer = r.extra?.feePayer;
-      return (
-        r.scheme === "exact" && r.network === SOLANA && r.payTo === PAY_TO && r.asset === USDC &&
-        amount > 0n && amount <= BigInt(maxMicro) &&
-        typeof feePayer === "string" && BASE58.test(feePayer) && feePayer.length >= 32 && feePayer.length <= 44 && feePayer !== walletAddress
-      );
+      if (!(r.scheme === "exact" && amount > 0n && amount <= BigInt(maxMicro))) return false;
+      if (holds.solana && r.network === SOLANA && r.payTo === PAY_TO && r.asset === USDC) {
+        const feePayer = r.extra?.feePayer;
+        return typeof feePayer === "string" && BASE58.test(feePayer) && feePayer.length >= 32 && feePayer.length <= 44 && feePayer !== holds.solana;
+      }
+      if (holds.evm && r.network === BASE_CHAIN && same(r.payTo, PAY_TO_BASE) && same(r.asset, USDC_BASE)) return true;
+      return false;
     } catch {
       return false;
     }
   });
+}
+
+/** The EVM secret key from EVM_PRIVATE_KEY (0x + 64 hex), or null; an address or anything else is refused without being quoted. */
+export function evmSecret(cfg) {
+  let raw = cfg.evmSecret ? String(cfg.evmSecret).trim() : "";
+  if (!raw) return null;
+  if (/^[0-9a-fA-F]{64}$/.test(raw)) raw = `0x${raw}`; // the same key without its prefix, as some wallets export it
+  if (/^(0x)?[0-9a-fA-F]{40}$/.test(raw)) throw new Error("the EVM key is a public address (40 hex digits); expected the 32-byte private key");
+  if (!EVM_KEY.test(raw)) throw new Error("the EVM key is not 0x followed by 64 hex digits");
+  return raw;
 }
 
 const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
@@ -495,33 +517,54 @@ export class Tape {
     return [tokenSafetyDef(catalog.routes), ...listed, WALLET_STATUS];
   }
 
+  /** A scheme with a clock on payload creation (its RPC reads have no timeout of their own); when the clock wins nothing was sent. */
+  static clocked(inner) {
+    return {
+      scheme: inner.scheme,
+      findDefaultAsset: inner.findDefaultAsset,
+      createPaymentPayload: (version, requirements) =>
+        Promise.race([
+          inner.createPaymentPayload(version, requirements),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("signing timed out (RPC)")), SIGNING_TIMEOUT_MS).unref?.()),
+        ]),
+    };
+  }
+
+  /**
+   * The wallets this server pays with: { solana: {address, scheme}|null, evm: {address, scheme}|null }, or null when none is
+   * configured. Both may be set; the API quotes Solana first, so Solana pays when both can. A key that does not load is reported
+   * in walletError (never quoted) and the other rail, if any, still works.
+   */
   wallet() {
     this.walletPromise ??= (async () => {
+      const wallets = { solana: null, evm: null };
+      const errors = [];
       try {
         const bytes = await secretBytes(this.cfg);
-        if (!bytes) return null;
-        const kit = await import("@solana/kit");
-        const signer = await kit.createKeyPairSignerFromBytes(bytes);
-        bytes.fill(0);
-        const { ExactSvmScheme } = await import("@x402/svm/exact/client");
-        const inner = new ExactSvmScheme(signer, this.cfg.rpcUrl ? { rpcUrl: this.cfg.rpcUrl } : undefined);
-        // The same scheme, with a clock on payload creation: its RPC reads have no timeout of their own. When the clock wins,
-        // nothing was handed to the transport, so nothing is sent.
-        const scheme = {
-          scheme: inner.scheme,
-          findDefaultAsset: inner.findDefaultAsset,
-          createPaymentPayload: (version, requirements) =>
-            Promise.race([
-              inner.createPaymentPayload(version, requirements),
-              new Promise((_, reject) => setTimeout(() => reject(new Error("signing timed out (RPC)")), SIGNING_TIMEOUT_MS).unref?.()),
-            ]),
-        };
-        return { address: String(signer.address), scheme };
+        if (bytes) {
+          const kit = await import("@solana/kit");
+          const signer = await kit.createKeyPairSignerFromBytes(bytes);
+          bytes.fill(0);
+          const { ExactSvmScheme } = await import("@x402/svm/exact/client");
+          wallets.solana = { address: String(signer.address), scheme: Tape.clocked(new ExactSvmScheme(signer, this.cfg.rpcUrl ? { rpcUrl: this.cfg.rpcUrl } : undefined)) };
+        }
       } catch (error) {
         // secretBytes words its own errors; a signer error (a public half that does not match) gets a fixed one
-        this.walletError = /^the key/.test(error?.message || "") ? error.message : "the key was read but is not a valid Solana keypair";
-        return null;
+        errors.push(/^the key/.test(error?.message || "") ? error.message : "the Solana key was read but is not a valid keypair");
       }
+      try {
+        const key = evmSecret(this.cfg);
+        if (key) {
+          const { privateKeyToAccount } = await import("viem/accounts");
+          const account = privateKeyToAccount(key);
+          const { ExactEvmScheme } = await import("@x402/evm/exact/client");
+          wallets.evm = { address: account.address, scheme: Tape.clocked(new ExactEvmScheme(account)) };
+        }
+      } catch (error) {
+        errors.push(/^the EVM key/.test(error?.message || "") ? error.message : "the EVM key was read but is not a valid private key");
+      }
+      this.walletError = errors.length ? errors.join("; ") : null;
+      return wallets.solana || wallets.evm ? wallets : null;
     })();
     return this.walletPromise;
   }
@@ -547,10 +590,12 @@ export class Tape {
       let signed = 0; // micro-USDC signed by this call (0 while nothing was)
       try {
         const { wrapFetchWithPayment, x402Client, decodePaymentResponseHeader } = await import("@x402/fetch");
-        const client = new x402Client()
-          .register(SOLANA, wallet.scheme)
+        const client = new x402Client();
+        if (wallet.solana) client.register(SOLANA, wallet.solana.scheme);
+        if (wallet.evm) client.register(BASE_CHAIN, wallet.evm.scheme);
+        client
           .setSpendControls({ maxAmountPerPayment: `$${(route.micro / 1e6).toFixed(6)}` }) // the library's own check, beside ours
-          .registerPolicy((_version, requirements) => pinned(requirements, route.micro, wallet.address))
+          .registerPolicy((_version, requirements) => pinned(requirements, route.micro, { solana: wallet.solana?.address || null, evm: wallet.evm?.address || null }))
           .onAfterPaymentCreation(async (context) => {
             signed += Number(context.selectedRequirements.amount);
           });
@@ -568,15 +613,17 @@ export class Tape {
         }
         const settled = Boolean(res.ok && receipt?.success);
         const today = this.spend.settle(route.micro, signed, settled);
-        const tx = typeof receipt?.transaction === "string" && TX_SIGNATURE.test(receipt.transaction) ? receipt.transaction : null;
-        return { res, via: "wallet", signed, paid: settled ? { micro: signed, tx, today: today.micro } : null };
+        const evmTx = /^0x[0-9a-fA-F]{64}$/;
+        const tx = typeof receipt?.transaction === "string" && (TX_SIGNATURE.test(receipt.transaction) || evmTx.test(receipt.transaction)) ? receipt.transaction : null;
+        const rail = receipt?.network === BASE_CHAIN ? "Base" : "Solana";
+        return { res, via: "wallet", signed, paid: settled ? { micro: signed, tx, rail, today: today.micro } : null };
       } catch (error) {
         this.spend.settle(route.micro, signed, false);
         if (error instanceof Refusal) throw error;
         const what = String(error?.message || error).slice(0, 300);
         if (signed) throw new Refusal(`a payment of ${usd(signed)} was signed and the answer did not arrive (${what}); it counts toward today's cap`);
         if (/filtered out|No payment requirements/i.test(what)) {
-          throw new Refusal(`nothing was paid: the API's quote did not match this server's pinned terms (our address, USDC on Solana mainnet, at most ${usd(route.micro)}, a fee payer that is not you)`);
+          throw new Refusal(`nothing was paid: the API's quote did not match this server's pinned terms (our address, USDC on Solana mainnet or on Base, at most ${usd(route.micro)}, on Solana a fee payer that is not you)`);
         }
         throw new Refusal(`nothing was paid: ${what}`);
       }
@@ -593,10 +640,10 @@ export class Tape {
   howToPay(route, via, body) {
     const lines = [];
     if (via === "api_key") lines.push(`${route.tool} costs ${usd(route.micro)} and the prepaid key did not cover it (out of credit, or the key is wrong).${apiSaid(body)}`);
-    else if (via === "wallet") lines.push(`${route.tool} costs ${usd(route.micro)} and the API did not accept the payment (it answered 402 to the signed request, which it does not settle; the signed amount still counts toward today's cap). Check that the wallet holds USDC on Solana: wallet_status shows the balance.${apiSaid(body)}`);
+    else if (via === "wallet") lines.push(`${route.tool} costs ${usd(route.micro)} and the API did not accept the payment (it answered 402 to the signed request, which it does not settle; the signed amount still counts toward today's cap). Check that the wallet holds USDC (on Solana, or on Base for an EVM key): wallet_status shows the balances.${apiSaid(body)}`);
     else if (via === "trial") lines.push(`${route.tool} costs ${usd(route.micro)}. The shared public trial key did not cover it: it pays tools up to $0.02 and has tiny daily caps for everyone together.${apiSaid(body)}`);
     else lines.push(`${route.tool} costs ${usd(route.micro)} per call and no payment method is configured.`);
-    if (via !== "wallet") lines.push("Pay per call: set SOLANA_KEYPAIR_PATH (a solana-keygen file) or SOLANA_PRIVATE_KEY (base58, 64-byte secret key) for a wallet that holds USDC. No SOL is needed; the network fee is paid for you.");
+    if (via !== "wallet") lines.push("Pay per call: set SOLANA_KEYPAIR_PATH (a solana-keygen file) or SOLANA_PRIVATE_KEY (base58, 64-byte secret key) for a Solana wallet that holds USDC, or EVM_PRIVATE_KEY (0x + 64 hex) for a Base wallet that holds USDC. No SOL or ETH is needed; the network fee is paid for you.");
     if (via !== "api_key") lines.push(`Or prepay: set LOOPHOLETAPE_API_KEY to a key bought with a plain USDC transfer (${this.cfg.base}/v1/keys/transfer).`);
     lines.push("Free without any setup: token_safety with depth=free, radar, market_regime, check_coverage.");
     if (this.walletError) lines.push(`Wallet not loaded: ${this.walletError}.`);
@@ -614,9 +661,9 @@ export class Tape {
     }
     if (res.ok) {
       let note = null;
-      if (via === "wallet" && paid) note = `[paid ${usd(paid.micro)} USDC on Solana${paid.tx ? `, tx ${paid.tx}` : ""}; today ${usd(paid.today)} of ${usd(this.cfg.capDay)}]`;
+      if (via === "wallet" && paid) note = `[paid ${usd(paid.micro)} USDC on ${paid.rail}${paid.tx ? `, tx ${paid.tx}` : ""}; today ${usd(paid.today)} of ${usd(this.cfg.capDay)}]`;
       else if (via === "wallet" && signed) note = `[a payment of ${usd(signed)} was signed and the answer carried no receipt; it counts toward today's cap]`;
-      else if (via === "trial") note = "[answered on the shared public trial key: free, with tiny daily caps. Set SOLANA_KEYPAIR_PATH or LOOPHOLETAPE_API_KEY to keep going.]";
+      else if (via === "trial") note = "[answered on the shared public trial key: free, with tiny daily caps. Set SOLANA_KEYPAIR_PATH, EVM_PRIVATE_KEY or LOOPHOLETAPE_API_KEY to keep going.]";
       else if (via === "api_key") note = "[charged to the prepaid key]";
       return { content: note ? [text(body), text(note)] : [text(body)] };
     }
@@ -674,6 +721,25 @@ export class Tape {
     }
   }
 
+  /** USDC balance of an EVM address on Base: one eth_call of balanceOf(address) on the USDC contract. */
+  async usdcBalanceBase(address) {
+    try {
+      const data = `0x70a08231${address.slice(2).toLowerCase().padStart(64, "0")}`; // balanceOf(address)
+      const res = await this.fetch(this.cfg.evmRpcUrl || DEFAULT_EVM_RPC, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: USDC_BASE, data }, "latest"] }),
+        redirect: "error",
+        signal: AbortSignal.timeout(8_000),
+      });
+      const hex = (await res.json()).result;
+      if (typeof hex !== "string" || !/^0x[0-9a-fA-F]*$/.test(hex)) return null;
+      return Number(BigInt(hex || "0x0")) / 1e6;
+    } catch {
+      return null;
+    }
+  }
+
   async walletStatus() {
     const mode = await this.mode();
     const wallet = await this.wallet();
@@ -690,14 +756,18 @@ export class Tape {
       api: this.cfg.base,
       mode,
       mode_meaning: {
-        wallet: "paid tools are paid per call in USDC from the wallet below",
+        wallet: "paid tools are paid per call in USDC from the wallet(s) below: Solana first when both are set",
         api_key: "paid tools are charged to the prepaid key",
         trial: "no wallet and no key: paid tools up to $0.02 run on the shared public trial key until its tiny daily caps are used up",
         free_only: "no wallet, no key, trial off: free tools only",
       }[mode],
-      wallet: wallet ? { address: wallet.address, usdc: await this.usdcBalance(wallet.address), needs_sol: false } : null,
+      wallet: wallet?.solana ? { address: wallet.solana.address, usdc: await this.usdcBalance(wallet.solana.address), needs_sol: false, pays_first: true } : null,
+      wallet_base: wallet?.evm ? { address: wallet.evm.address, usdc: await this.usdcBalanceBase(wallet.evm.address), needs_eth: false, pays_when: wallet.solana ? "the Solana wallet cannot" : "always" } : null,
       wallet_error: this.walletError,
-      pays_only: { to: PAY_TO, asset: "USDC", network: "Solana mainnet", fee_payer: "the facilitator, never this wallet" },
+      pays_only: [
+        { to: PAY_TO, asset: "USDC", network: "Solana mainnet", fee_payer: "the facilitator, never this wallet" },
+        { to: PAY_TO_BASE, asset: "USDC", network: "Base", gas: "the facilitator, never this wallet" },
+      ],
       caps_usd: { per_call: this.cfg.capCall / 1e6, per_day: this.cfg.capDay / 1e6 },
       signed_today_usd: today.micro / 1e6, // what the daily cap counts: every payment signed today (UTC), settled or not
       settled_today_usd: (today.settled || 0) / 1e6,

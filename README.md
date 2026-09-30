@@ -10,9 +10,9 @@ Check one mint for **$0.005**, or up to five caller-selected mints for **$0.01 t
 
 ## Local MCP server: one command, pays from your own wallet
 
-`loopholetape-mcp` is a small local MCP server (stdio) for Claude Desktop, Claude Code, Cursor and any other MCP client. It lists this API's tools and pays the paid ones per call in USDC on Solana, signed on your machine. Most MCP clients cannot sign an x402 payment; this does it for them. No account, no subscription.
+`loopholetape-mcp` is a small local MCP server (stdio) for Claude Desktop, Claude Code, Cursor and any other MCP client. It lists this API's tools and pays the paid ones per call in USDC, signed on your machine, from a Solana wallet or a Base (EVM) wallet. Most MCP clients cannot sign an x402 payment; this does it for them. No account, no subscription.
 
-**Claude Desktop:** download [`loopholetape-mcp-0.1.0.mcpb`](https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.1.0/loopholetape-mcp-0.1.0.mcpb) and open it. The wallet key is optional; the app keeps it in the system keychain.
+**Claude Desktop:** download [`loopholetape-mcp-0.1.0.mcpb`](https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.2.0/loopholetape-mcp-0.2.0.mcpb) and open it. The wallet key is optional; the app keeps it in the system keychain.
 
 **Any MCP client** (Node.js 20 or newer):
 
@@ -21,30 +21,31 @@ Check one mint for **$0.005**, or up to five caller-selected mints for **$0.01 t
   "mcpServers": {
     "loopholetape": {
       "command": "npx",
-      "args": ["-y", "https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.1.0/loopholetape-mcp-0.1.0.tgz"],
+      "args": ["-y", "https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.2.0/loopholetape-mcp-0.2.0.tgz"],
       "env": { "SOLANA_KEYPAIR_PATH": "/absolute/path/to/a-small-wallet.json" }
     }
   }
 }
 ```
 
-Claude Code: `claude mcp add loopholetape -e SOLANA_KEYPAIR_PATH=/absolute/path/to/a-small-wallet.json -- npx -y https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.1.0/loopholetape-mcp-0.1.0.tgz`
+Claude Code: `claude mcp add loopholetape -e SOLANA_KEYPAIR_PATH=/absolute/path/to/a-small-wallet.json -- npx -y https://github.com/gosadu/loophole-tape/releases/download/mcp-v0.2.0/loopholetape-mcp-0.2.0.tgz`
 
 **What is free and what costs.** `token_safety` is free for every Solana mint: mint and freeze authority, Token-2022 holder risks, the ten largest token accounts, the launch venue, and a verdict word with its reason. For a pump.fun launch in its first hours it also buys the $0.01 verdict with calibrated rug and graduation odds; `depth=free` never pays, and nothing is bought when the paid answer would add nothing. The other paid tools cost $0.001 to $0.04 a call and say so in their description. `radar`, `market_regime`, `check_coverage` and `wallet_status` are free. With no wallet and no key, the free tools work and a shared trial key answers a few paid calls a day.
 
 **What it will not do** (enforced in [`src/server.mjs`](src/server.mjs), one file, with [tests](test/server.test.mjs); reviewed adversarially before the first release, and the review's findings are fixed in 0.1.0):
 
-- sign a payment to any address other than this API's (`9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT`), in any asset other than USDC, on any network other than Solana mainnet, or with your own wallet as the fee payer;
+- sign a payment to any address other than this API's (`9HkwyUhDMyjbpSpnyu5xuZ9vRaFQeajnJsavhie7XcsT` on Solana, `0x25d408eF54e60F3006bD13d5A040d525E2F359c2` on Base), in any asset other than USDC, on any network other than Solana mainnet or Base, or (on Solana) with your own wallet as the fee payer;
 - sign more for one call than the tool's listed price or `LOOPHOLETAPE_MAX_USD_PER_CALL` (default $0.05; the payment library caps one payment at $1 on top);
 - sign more in one UTC day than `LOOPHOLETAPE_MAX_USD_PER_DAY` (default $1): every payment is counted in `~/.loopholetape-mcp/spend.json` under a lock *before* it is signed, settled or not, so the cap survives restarts, crashes and several copies of the server sharing that directory; if the file cannot be read or written, paid calls are refused rather than uncounted;
 - write, log or send the key. A pasted public address is refused (the key must be the 64-byte secret), so no wallet is ever derived from public text.
 
-Use a dedicated wallet that holds a few dollars of USDC. It needs no SOL: the facilitator pays the network fee.
+Use a dedicated wallet that holds a few dollars of USDC. It needs no SOL and no ETH: the facilitator pays the network fee on both chains.
 
 | Variable | Meaning |
 |---|---|
 | `SOLANA_KEYPAIR_PATH` | path to a `solana-keygen` JSON keypair |
 | `SOLANA_PRIVATE_KEY` | or the 64-byte secret key itself, base58 |
+| `EVM_PRIVATE_KEY` | or a Base (EVM) wallet's private key, 0x + 64 hex: pays USDC on Base; Solana pays first when both are set |
 | `LOOPHOLETAPE_API_KEY` | a prepaid `lt_...` key instead of a wallet (see below) |
 | `LOOPHOLETAPE_MAX_USD_PER_CALL`, `LOOPHOLETAPE_MAX_USD_PER_DAY` | spending caps, default 0.05 and 1 |
 | `SOLANA_RPC_URL` | your own RPC for the token and balance reads (default: the public mainnet endpoint) |
