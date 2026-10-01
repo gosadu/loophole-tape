@@ -1,0 +1,20 @@
+{
+ "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+ "name": "com.loopholetape/pumpfun-rug-check",
+ "title": "pump.fun rug check and new-token feeds (remote MCP)",
+ "description": "pump.fun rug check: free coarse check for any Solana mint, calibrated rug odds, new-token feeds",
+ "version": "0.9.0",
+ "websiteUrl": "https://api.loopholetape.com",
+ "icons": [
+  {
+   "src": "https://api.loopholetape.com/favicon.svg",
+   "mimeType": "image/svg+xml"
+  }
+ ],
+ "remotes": [
+  {
+   "type": "streamable-http",
+   "url": "https://api.loopholetape.com/mcp"
+  }
+ ]
+}
