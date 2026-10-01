@@ -185,7 +185,7 @@ Use the live documents for current capabilities, schemas and prices:
 - [Agent guide](https://api.loopholetape.com/llms.txt)
 - [x402 manifest](https://api.loopholetape.com/.well-known/x402) and [resource catalog](https://api.loopholetape.com/v1/x402/resources)
 
-Connect to `https://api.loopholetape.com/mcp` (33 tools, 10 free; protocol revisions 2024-11-05 to 2026-07-28; the domain-verified registry name `com.loopholetape/tape` is pending). Start with the free `token_check` tool (verdict word, one reason, coverage) before any paid call.
+Connect to `https://api.loopholetape.com/mcp` (33 tools, 10 free; protocol revisions 2024-11-05 to 2026-07-28; registry ids `io.github.gosadu/loophole-tape` for this remote and `com.loopholetape/solana-token-safety` for the local paying server). Start with the free `token_check` tool (verdict word, one reason, coverage) before any paid call.
 
 ## New in 0.9.0 (2026-09-29)
 
@@ -214,7 +214,7 @@ Routers that cannot fill a path template can use the query form of the per-id ro
 
 ## MCP (for agents that call tools)
 
-MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). **28 tools: eight free, twenty paid** (tools that declare an `outputSchema` publish `anyOf[success, x402 PaymentRequired, refusal]`, so both the TypeScript and Python x402 clients pay them) (the `verdict` tool, $0.01, returns the verdict object with its share link). The compact-check tools are `check_coverage` and `watchlist_updates` (free), `check_pumpfun_risk` ($0.005) and `check_watchlist_risk` ($0.01 total). MCP mint lists are JSON arrays; a single check takes `mint`. The new paid tools publish typed `outputSchema` and return the same data as HTTP.
+MCP server over streamable HTTP at `https://api.loopholetape.com/mcp` (no trailing slash needed; CORS preflight and plain JSON accepted). **33 tools: ten free, twenty-three paid.** Since 2026-10-01 `tools/list` carries no `outputSchema` (it is 57 KB instead of 126 KB; every client pays that on every session): the JSON Schema of each tool's result, `anyOf[success, x402 PaymentRequired, refusal]`, is the resource template `loopholetape://schema/{tool}` (`resources/templates/list`, `resources/read`) and `output_schema` in `/v1/x402/resources`. Results still carry `structuredContent`; without a declared schema neither official SDK validates it, so the TypeScript and Python x402 clients pay and read the tools as before (proven with the Python client on 2026-09-30). The compact-check tools are `check_coverage` and `watchlist_updates` (free), `check_pumpfun_risk` ($0.005) and `check_watchlist_risk` ($0.01 total). MCP mint lists are JSON arrays; a single check takes `mint`. The skill document is also served at `/SKILL.md`.
 
 Existing tools: `catalog`, `health`, `market_regime`, `sample_mint`, `radar`, `rhc_regime` (free); `mint_risk_card` ($0.025), `recent_launches` ($0.01), `recent_rugs`, `recent_graduations`, `creator_reputation`, `wallet_profile`, `rhc_curve_card` ($0.02), `buy_api_key` ($2.00 once, a prepaid key for the HTTP routes and these tools), `buy_trial_key` ($0.10), `buy_dataset` ($5.00 per day file), `launches_since` ($0.001 per poll), and `rhc_recent_launches` ($0.01).
 
