@@ -63,6 +63,10 @@ Only these events advance a watch cursor: `creator_sold`, `bundle_dumped`, `curv
 
 The five-second eligibility limit is measured at result generation, before settlement. Settlement and network transit can add delay. `meta.freshness_checked_at` and `feed_lag_at_generation_s` record the eligibility check; `result_age_s`, `feed_lag_s` and `is_stale` are aged when the result is sent, including time spent settling. Compare `t` with your own clock after receipt; this is not a guarantee of delivery within five seconds.
 
+## Free history: the dataset on Hugging Face
+
+Every pump.fun launch our recorder saw, one parquet file per UTC day, with what happened to each launch afterwards (graduation, rug flag with timing, peak curve reserve, creator, early holder structure) and a second table with the first 30 minutes of every graduation pool: https://huggingface.co/datasets/loopholetape/pumpfun-launches (CC BY 4.0). Days at least 7 days old are published there free; the newest 7 days are sold on the API as `GET /v1/datasets/pumpfun_launches/{day}` ($5.00). The dataset card lists the data's 17 known issues; read it before training on the files.
+
 ## Try it without a wallet
 
 A shared public trial key is published at [`/llms.txt`](https://api.loopholetape.com/llms.txt) (section "Try it without a wallet") and in [`/pricing`](https://api.loopholetape.com/pricing). Send it as `X-API-Key` on any route priced $0.02 or less (launches, the compact check, the watchlist, the verdict, the screened list, the outcome labels, and since 2026-09-30 the rug and graduation lists, the creator and wallet cards, the pons curve card and its trades). It has tiny daily caps ($0.50 a day shared, $0.02 a day per caller IP, so one $0.02 answer is a caller's whole day) and answers carry `X-Tape-Trial: 1` and a `meta.trial` block with the remaining amount; trial calls are never counted as payments. For your own budget buy a prepaid key: `GET /v1/keys/trial` ($0.10 of credit) or `GET /v1/keys/new` ($2.00).
